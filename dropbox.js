@@ -5,10 +5,12 @@
   const AUTH_KEY = 'photopedia-dropbox-auth-v1';
   const VERIFIER_KEY = 'photopedia-dropbox-pkce-verifier';
   const STATE_KEY = 'photopedia-dropbox-oauth-state';
+  const LIBRARY_CACHE_KEY = 'photopedia-library-cache-v1';
   const TRANSPARENT_PIXEL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
   const assetCache = new Map();
   let saveTimers = new Map();
   let currentAuth = null;
+  let appStarted = false;
 
   const gate = document.getElementById('authGate');
   const appShell = document.getElementById('appShell');
@@ -18,6 +20,23 @@
 
   function safeJSON(raw, fallback) {
     try { return JSON.parse(raw); } catch { return fallback; }
+  }
+  function readLibraryCache() {
+    return safeJSON(localStorage.getItem(LIBRARY_CACHE_KEY) || 'null', null);
+  }
+  function writeLibraryCache(content) {
+    try { localStorage.setItem(LIBRARY_CACHE_KEY, JSON.stringify(content)); } catch (e) { console.warn('Could not cache Photopedia library locally', e); }
+  }
+  function startAppFromContent(content, syncLabel='Dropbox connected') {
+    if(!content?.entries || appStarted) return false;
+    window.PHOTOPEDIA_CONTENT=privatizeLocalAssets(content);
+    window.PhotopediaDropbox={ hydrateImages, savePersonal, signOut, localizeTeachingImages };
+    gate?.classList.add('hidden');
+    appShell?.classList.remove('hidden');
+    setSync(syncLabel,'ok');
+    appStarted=true;
+    window.startPhotopedia();
+    return true;
   }
   function setMessage(text, kind='') {
     if (!authMessage) return;
@@ -117,6 +136,20 @@
 
   async function dbxText(path) { return (await dbxDownload(path)).text(); }
 
+  async function dbxEnsureFolder(path) {
+    const token=await refreshIfNeeded();
+    const res=await fetch('https://api.dropboxapi.com/2/files/create_folder_v2',{
+      method:'POST',
+      headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},
+      body:JSON.stringify({path,autorename:false})
+    });
+    if(res.ok) return res.json();
+    const text=await res.text();
+    // Existing folder is exactly what we want; treat that as success.
+    if(res.status===409 && /conflict/i.test(text)) return null;
+    const err=new Error(`Dropbox folder creation failed (${res.status})`); err.detail=text; throw err;
+  }
+
   async function dbxUpload(path, contents) {
     const token=await refreshIfNeeded();
     const body=contents instanceof Blob ? contents : new Blob([contents],{type:'application/octet-stream'});
@@ -172,8 +205,13 @@
 
   async function localizeTeachingImages(content) {
     const urls = remoteTeachingImages(content);
-    if (!urls.length) return { changed:false, count:0 };
+    if (!urls.length) {
+      setSync('Dropbox synced · images local','ok');
+      return { changed:false, count:0 };
+    }
     setSync(`Localizing ${urls.length} reference image${urls.length===1?'':'s'}…`,'busy');
+    // Dropbox uploads do not create missing parent folders.
+    await dbxEnsureFolder('/assets/commons');
     const replacements = new Map();
     const failures = [];
     for (let i=0; i<urls.length; i++) {
@@ -194,7 +232,7 @@
       }
     }
     if (!replacements.size) {
-      setSync('Dropbox synced; external images unchanged','error');
+      setSync(`Dropbox synced · image import failed (${failures.length})`,'error');
       return { changed:false, count:0, failures };
     }
     Object.values(content.entries || {}).forEach(entry => {
@@ -202,6 +240,7 @@
       for (const [from,to] of replacements) entry.body = entry.body.split(from).join(to);
     });
     await saveJSON('/content/content.json', content);
+    writeLibraryCache(content);
     await saveJSON('/personal/image-localization.json', {
       completedAt:new Date().toISOString(),
       localized:[...replacements.entries()].map(([source,asset])=>({source,asset})),
@@ -262,23 +301,22 @@
     await saveJSON('/personal/photopedia.json',{libraryVersion:'1.0',lastConnected:new Date().toISOString()});
   }
 
-  async function loadLibrary() {
-    setMessage('Loading your private Photopedia library…');
-    setSync('Loading Dropbox…','busy');
+  async function loadLibrary({background=false}={}) {
+    if(!background) {
+      setMessage('Loading your private Photopedia library…');
+      setSync('Loading Dropbox…','busy');
+    } else {
+      setSync('Refreshing Dropbox…','busy');
+    }
     const text=await dbxText('/content/content.json');
     const content=safeJSON(text,null);
     if(!content?.entries) throw new Error('The Dropbox library file is present but is not valid Photopedia content.');
+    writeLibraryCache(content);
     const externalCount=remoteTeachingImages(content).length;
-    window.PHOTOPEDIA_CONTENT=privatizeLocalAssets(content);
     await loadPersonal();
-    window.PhotopediaDropbox={ hydrateImages, savePersonal, signOut, localizeTeachingImages };
-    gate?.classList.add('hidden');
-    appShell?.classList.remove('hidden');
-    setSync('Dropbox synced','ok');
-    window.startPhotopedia();
+    if(!appStarted) startAppFromContent(content,'Dropbox synced');
+    else setSync('Dropbox synced','ok');
     if (externalCount) {
-      // One-time background migration: copy remote Wikimedia teaching images into
-      // the private Dropbox library, rewrite content.json, then reload once.
       setTimeout(async()=>{
         try {
           const result=await localizeTeachingImages(content);
@@ -292,6 +330,13 @@
         }
       },700);
     }
+  }
+
+  function restoreCachedLibrary() {
+    const cached=readLibraryCache();
+    if(!cached?.entries) return false;
+    startAppFromContent(cached,'Dropbox connected · refreshing…');
+    return true;
   }
 
   function showMissingKey() {
@@ -324,10 +369,13 @@
     catch(e) { console.error(e); clearAuth(); setMessage(e.message,'error'); return; }
     currentAuth=savedAuth();
     if(!currentAuth?.accessToken) { setMessage('Connect Dropbox to load your private Photopedia library.'); return; }
-    try { await loadLibrary(); }
+    const restored=restoreCachedLibrary();
+    try { await loadLibrary({background:restored}); }
     catch(e) {
       console.error(e);
-      if(e.status===409 || /download failed \(409\)/.test(e.message)) showLibraryMissing();
+      if(appStarted) {
+        setSync('Offline · showing cached library','error');
+      } else if(e.status===409 || /download failed \(409\)/.test(e.message)) showLibraryMissing();
       else setMessage(e.message || 'Could not load the Dropbox library.','error');
     }
   }
