@@ -203,6 +203,39 @@
     return `commons-${stem}${ext}`;
   }
 
+  function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+  async function dbxSaveUrl(path, url) {
+    const token = await refreshIfNeeded();
+    const client = new Dropbox.Dropbox({ accessToken: token });
+    try {
+      const response = await client.filesSaveUrl({ path, url });
+      const result = response.result || response;
+      const tag = result?.['.tag'];
+      if (tag === 'complete') return result.complete;
+      if (tag !== 'async_job_id' || !result.async_job_id) throw new Error('Dropbox save_url returned an unexpected response.');
+      const jobId = result.async_job_id;
+      for (let attempt=0; attempt<90; attempt++) {
+        await sleep(500);
+        const statusResponse = await client.filesSaveUrlCheckJobStatus({ async_job_id: jobId });
+        const status = statusResponse.result || statusResponse;
+        const statusTag = status?.['.tag'];
+        if (statusTag === 'complete') return status.complete;
+        if (statusTag === 'failed') {
+          const failedTag = status.failed?.['.tag'] || 'unknown';
+          throw new Error(`Dropbox could not download the source image (${failedTag}).`);
+        }
+      }
+      throw new Error('Dropbox image download timed out.');
+    } catch (e) {
+      // If a previous partial run already saved the deterministic target file,
+      // the useful end state already exists. Treat a path conflict as success.
+      const detail = JSON.stringify(e?.error || e?.response || e || {});
+      if (/conflict/i.test(detail)) return { existing:true, path };
+      throw e;
+    }
+  }
+
   async function localizeTeachingImages(content) {
     const urls = remoteTeachingImages(content);
     if (!urls.length) {
@@ -210,7 +243,6 @@
       return { changed:false, count:0 };
     }
     setSync(`Localizing ${urls.length} reference image${urls.length===1?'':'s'}…`,'busy');
-    // Dropbox uploads do not create missing parent folders.
     await dbxEnsureFolder('/assets/commons');
     const replacements = new Map();
     const failures = [];
@@ -218,13 +250,11 @@
       const url = urls[i];
       try {
         setSync(`Saving reference image ${i+1} of ${urls.length}…`,'busy');
-        const res = await fetch(url, { mode:'cors', credentials:'omit' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const blob = await res.blob();
-        if (!blob.size) throw new Error('empty image');
-        const filename = commonsFilename(res.url || url, i);
+        const filename = commonsFilename(url, i);
         const dropboxPath = `/assets/commons/${filename}`;
-        await dbxUpload(dropboxPath, blob);
+        // Ask Dropbox's servers to fetch the public image URL directly. This
+        // avoids browser CORS restrictions that prevented the earlier importer.
+        await dbxSaveUrl(dropboxPath, url);
         replacements.set(url, `assets/commons/${filename}`);
       } catch (e) {
         console.warn('Could not localize image', url, e);
@@ -246,7 +276,8 @@
       localized:[...replacements.entries()].map(([source,asset])=>({source,asset})),
       failures
     });
-    setSync(`${replacements.size} reference images saved to Dropbox`,'ok');
+    if (failures.length) setSync(`Dropbox synced · ${replacements.size} images local, ${failures.length} failed`,'error');
+    else setSync('Dropbox synced · images local','ok');
     return { changed:true, count:replacements.size, failures };
   }
 

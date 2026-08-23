@@ -1,4 +1,4 @@
-const CACHE='photopedia-v1.0.4-shell';
+const CACHE='photopedia-v1.0.5-shell';
 const CORE=['./','./index.html','./styles.css','./config.js','./app.js','./dropbox.js','./manifest.webmanifest'];
 self.addEventListener('install',e=>e.waitUntil(
   caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())
