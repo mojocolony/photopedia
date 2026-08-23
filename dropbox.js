@@ -30,7 +30,7 @@
   function startAppFromContent(content, syncLabel='Dropbox connected') {
     if(!content?.entries || appStarted) return false;
     window.PHOTOPEDIA_CONTENT=privatizeLocalAssets(content);
-    window.PhotopediaDropbox={ hydrateImages, savePersonal, signOut, localizeTeachingImages };
+    window.PhotopediaDropbox={ hydrateImages, savePersonal, signOut };
     gate?.classList.add('hidden');
     appShell?.classList.remove('hidden');
     setSync(syncLabel,'ok');
@@ -136,20 +136,6 @@
 
   async function dbxText(path) { return (await dbxDownload(path)).text(); }
 
-  async function dbxEnsureFolder(path) {
-    const token=await refreshIfNeeded();
-    const res=await fetch('https://api.dropboxapi.com/2/files/create_folder_v2',{
-      method:'POST',
-      headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},
-      body:JSON.stringify({path,autorename:false})
-    });
-    if(res.ok) return res.json();
-    const text=await res.text();
-    // Existing folder is exactly what we want; treat that as success.
-    if(res.status===409 && /conflict/i.test(text)) return null;
-    const err=new Error(`Dropbox folder creation failed (${res.status})`); err.detail=text; throw err;
-  }
-
   async function dbxUpload(path, contents) {
     const token=await refreshIfNeeded();
     const body=contents instanceof Blob ? contents : new Blob([contents],{type:'application/octet-stream'});
@@ -174,131 +160,6 @@
   }
 
   async function saveJSON(path, value) { return dbxUpload(path, JSON.stringify(value,null,2)+'\n'); }
-
-  function remoteTeachingImages(content) {
-    const found = new Map();
-    const entries = content?.entries || {};
-    const re = /<img[^>]+src=(["'])(https:\/\/(?:upload\.wikimedia\.org|commons\.wikimedia\.org\/wiki\/Special:Redirect\/file\/)[^"']+)\1/gi;
-    Object.values(entries).forEach(entry => {
-      if (typeof entry.body !== 'string') return;
-      let m;
-      while ((m = re.exec(entry.body))) found.set(m[2], true);
-    });
-    return [...found.keys()];
-  }
-
-  function commonsFilename(url, index=0) {
-    let raw = url.split('/file/').pop();
-    if (raw === url) raw = url.split('/').pop();
-    raw = (raw || `image-${index+1}.jpg`).split('?')[0];
-    try { raw = decodeURIComponent(raw); } catch {}
-    const dot = raw.lastIndexOf('.');
-    let ext = dot > 0 ? raw.slice(dot).toLowerCase() : '.jpg';
-    if (!/^\.(?:jpe?g|png|gif|webp|svg)$/i.test(ext)) ext = '.jpg';
-    let stem = dot > 0 ? raw.slice(0,dot) : raw;
-    stem = stem.normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
-      .replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase();
-    if (!stem) stem = `image-${index+1}`;
-    if (stem.length > 92) stem = stem.slice(0,92).replace(/-+$/,'');
-    return `commons-${stem}${ext}`;
-  }
-
-  function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
-
-  async function resolveTeachingImageUrl(url) {
-    if (!/commons\.wikimedia\.org\/wiki\/Special:Redirect\/file\//i.test(url)) return url;
-    const encoded = url.split('/file/').pop().split(/[?#]/)[0];
-    let filename = encoded;
-    try { filename = decodeURIComponent(encoded); } catch {}
-    const api = 'https://commons.wikimedia.org/w/api.php?' + new URLSearchParams({
-      action:'query', format:'json', origin:'*', redirects:'1',
-      prop:'imageinfo', iiprop:'url', titles:`File:${filename}`
-    }).toString();
-    const res = await fetch(api, { cache:'no-store' });
-    if (!res.ok) throw new Error(`Could not resolve Wikimedia image URL (${res.status}).`);
-    const data = await res.json();
-    const page = Object.values(data?.query?.pages || {})[0];
-    const direct = page?.imageinfo?.[0]?.url;
-    if (!direct) throw new Error('Wikimedia did not return a direct image URL.');
-    return direct;
-  }
-
-  async function dbxSaveUrl(path, url) {
-    const token = await refreshIfNeeded();
-    const client = new Dropbox.Dropbox({ accessToken: token });
-    try {
-      const response = await client.filesSaveUrl({ path, url });
-      const result = response.result || response;
-      const tag = result?.['.tag'];
-      if (tag === 'complete') return result.complete;
-      if (tag !== 'async_job_id' || !result.async_job_id) throw new Error('Dropbox save_url returned an unexpected response.');
-      const jobId = result.async_job_id;
-      for (let attempt=0; attempt<90; attempt++) {
-        await sleep(500);
-        const statusResponse = await client.filesSaveUrlCheckJobStatus({ async_job_id: jobId });
-        const status = statusResponse.result || statusResponse;
-        const statusTag = status?.['.tag'];
-        if (statusTag === 'complete') return status.complete;
-        if (statusTag === 'failed') {
-          const failedTag = status.failed?.['.tag'] || 'unknown';
-          throw new Error(`Dropbox could not download the source image (${failedTag}).`);
-        }
-      }
-      throw new Error('Dropbox image download timed out.');
-    } catch (e) {
-      // If a previous partial run already saved the deterministic target file,
-      // the useful end state already exists. Treat a path conflict as success.
-      const detail = JSON.stringify(e?.error || e?.response || e || {});
-      if (/conflict/i.test(detail)) return { existing:true, path };
-      throw e;
-    }
-  }
-
-  async function localizeTeachingImages(content) {
-    const urls = remoteTeachingImages(content);
-    if (!urls.length) {
-      setSync('Dropbox synced · images local','ok');
-      return { changed:false, count:0 };
-    }
-    setSync(`Localizing ${urls.length} reference image${urls.length===1?'':'s'}…`,'busy');
-    await dbxEnsureFolder('/assets/commons');
-    const replacements = new Map();
-    const failures = [];
-    for (let i=0; i<urls.length; i++) {
-      const url = urls[i];
-      try {
-        setSync(`Saving reference image ${i+1} of ${urls.length}…`,'busy');
-        const filename = commonsFilename(url, i);
-        const dropboxPath = `/assets/commons/${filename}`;
-        // Ask Dropbox's servers to fetch the public image URL directly. This
-        // avoids browser CORS restrictions that prevented the earlier importer.
-        const sourceUrl = await resolveTeachingImageUrl(url);
-        await dbxSaveUrl(dropboxPath, sourceUrl);
-        replacements.set(url, `assets/commons/${filename}`);
-      } catch (e) {
-        console.warn('Could not localize image', url, e);
-        failures.push({url,error:e?.message || String(e)});
-      }
-    }
-    if (!replacements.size) {
-      setSync(`Dropbox synced · image import failed (${failures.length})`,'error');
-      return { changed:false, count:0, failures };
-    }
-    Object.values(content.entries || {}).forEach(entry => {
-      if (typeof entry.body !== 'string') return;
-      for (const [from,to] of replacements) entry.body = entry.body.split(from).join(to);
-    });
-    await saveJSON('/content/content.json', content);
-    writeLibraryCache(content);
-    await saveJSON('/personal/image-localization.json', {
-      completedAt:new Date().toISOString(),
-      localized:[...replacements.entries()].map(([source,asset])=>({source,asset})),
-      failures
-    });
-    if (failures.length) setSync(`Dropbox synced · ${replacements.size} images local, ${failures.length} failed`,'error');
-    else setSync('Dropbox synced · images local','ok');
-    return { changed:true, count:replacements.size, failures };
-  }
 
   function privatizeLocalAssets(content) {
     const entries=content?.entries || {};
@@ -362,27 +223,9 @@
     const content=safeJSON(text,null);
     if(!content?.entries) throw new Error('The Dropbox library file is present but is not valid Photopedia content.');
     writeLibraryCache(content);
-    const externalCount=remoteTeachingImages(content).length;
     await loadPersonal();
     if(!appStarted) startAppFromContent(content,'Dropbox synced');
     else setSync('Dropbox synced','ok');
-    if (externalCount) {
-      setTimeout(async()=>{
-        try {
-          const result=await localizeTeachingImages(content);
-          if (result.changed) {
-            localStorage.setItem('photopedia-localized-images-v1',String(Date.now()));
-            // Keep the current screen in place. The shared entries object is
-            // updated in memory, and newly-local paths are converted to private
-            // Dropbox-backed image placeholders for subsequent renders.
-            privatizeLocalAssets(content);
-          }
-        } catch(e) {
-          console.error('Image localization failed',e);
-          setSync('Dropbox synced; image import incomplete','error');
-        }
-      },700);
-    }
   }
 
   function restoreCachedLibrary() {

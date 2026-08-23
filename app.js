@@ -117,7 +117,7 @@ function showHome(){
     <div class="home-card" data-go="lab"><div class="eyebrow">Lab</div><h3>Learn by seeing</h3><p>Controlled experiments that make technical ideas tangible.</p></div>
     <div class="home-card" data-go="challenges"><div class="eyebrow">Challenges</div><h3>Go make photographs</h3><p>Daily prompts and weekly projects designed to turn ideas into practice.</p></div>
   </div><h2>Start a rabbit hole</h2><div class="topic-list">${['exposure','aperture','shutter-speed','iso','depth-of-field','computational-photography'].map(topicCard).join('')}</div>`;
-  context.innerHTML=`<div class="context-section"><div class="eyebrow">V1.0.6</div><h3>Private, connected reference</h3><div class="context-note">Your Photopedia library loads privately from Dropbox after sign-in. GitHub Pages hosts only the application shell; notes, stars and reading preferences sync through Dropbox.</div></div>`;
+  context.innerHTML=`<div class="context-section"><div class="eyebrow">V1.0.7</div><h3>Private, connected reference</h3><div class="context-note">Your Photopedia library loads privately from Dropbox after sign-in. GitHub Pages hosts only the application shell; notes, stars and reading preferences sync through Dropbox.</div></div>`;
   wireDynamic();
 }
 
