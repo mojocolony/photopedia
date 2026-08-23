@@ -142,6 +142,75 @@
 
   async function saveJSON(path, value) { return dbxUpload(path, JSON.stringify(value,null,2)+'\n'); }
 
+  function remoteTeachingImages(content) {
+    const found = new Map();
+    const entries = content?.entries || {};
+    const re = /<img[^>]+src=(["'])(https:\/\/(?:upload\.wikimedia\.org|commons\.wikimedia\.org\/wiki\/Special:Redirect\/file\/)[^"']+)\1/gi;
+    Object.values(entries).forEach(entry => {
+      if (typeof entry.body !== 'string') return;
+      let m;
+      while ((m = re.exec(entry.body))) found.set(m[2], true);
+    });
+    return [...found.keys()];
+  }
+
+  function commonsFilename(url, index=0) {
+    let raw = url.split('/file/').pop();
+    if (raw === url) raw = url.split('/').pop();
+    raw = (raw || `image-${index+1}.jpg`).split('?')[0];
+    try { raw = decodeURIComponent(raw); } catch {}
+    const dot = raw.lastIndexOf('.');
+    let ext = dot > 0 ? raw.slice(dot).toLowerCase() : '.jpg';
+    if (!/^\.(?:jpe?g|png|gif|webp|svg)$/i.test(ext)) ext = '.jpg';
+    let stem = dot > 0 ? raw.slice(0,dot) : raw;
+    stem = stem.normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase();
+    if (!stem) stem = `image-${index+1}`;
+    if (stem.length > 92) stem = stem.slice(0,92).replace(/-+$/,'');
+    return `commons-${stem}${ext}`;
+  }
+
+  async function localizeTeachingImages(content) {
+    const urls = remoteTeachingImages(content);
+    if (!urls.length) return { changed:false, count:0 };
+    setSync(`Localizing ${urls.length} reference image${urls.length===1?'':'s'}…`,'busy');
+    const replacements = new Map();
+    const failures = [];
+    for (let i=0; i<urls.length; i++) {
+      const url = urls[i];
+      try {
+        setSync(`Saving reference image ${i+1} of ${urls.length}…`,'busy');
+        const res = await fetch(url, { mode:'cors', credentials:'omit' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        if (!blob.size) throw new Error('empty image');
+        const filename = commonsFilename(res.url || url, i);
+        const dropboxPath = `/assets/commons/${filename}`;
+        await dbxUpload(dropboxPath, blob);
+        replacements.set(url, `assets/commons/${filename}`);
+      } catch (e) {
+        console.warn('Could not localize image', url, e);
+        failures.push({url,error:e?.message || String(e)});
+      }
+    }
+    if (!replacements.size) {
+      setSync('Dropbox synced; external images unchanged','error');
+      return { changed:false, count:0, failures };
+    }
+    Object.values(content.entries || {}).forEach(entry => {
+      if (typeof entry.body !== 'string') return;
+      for (const [from,to] of replacements) entry.body = entry.body.split(from).join(to);
+    });
+    await saveJSON('/content/content.json', content);
+    await saveJSON('/personal/image-localization.json', {
+      completedAt:new Date().toISOString(),
+      localized:[...replacements.entries()].map(([source,asset])=>({source,asset})),
+      failures
+    });
+    setSync(`${replacements.size} reference images saved to Dropbox`,'ok');
+    return { changed:true, count:replacements.size, failures };
+  }
+
   function privatizeLocalAssets(content) {
     const entries=content?.entries || {};
     Object.values(entries).forEach(entry=>{
@@ -199,13 +268,30 @@
     const text=await dbxText('/content/content.json');
     const content=safeJSON(text,null);
     if(!content?.entries) throw new Error('The Dropbox library file is present but is not valid Photopedia content.');
+    const externalCount=remoteTeachingImages(content).length;
     window.PHOTOPEDIA_CONTENT=privatizeLocalAssets(content);
     await loadPersonal();
-    window.PhotopediaDropbox={ hydrateImages, savePersonal, signOut };
+    window.PhotopediaDropbox={ hydrateImages, savePersonal, signOut, localizeTeachingImages };
     gate?.classList.add('hidden');
     appShell?.classList.remove('hidden');
     setSync('Dropbox synced','ok');
     window.startPhotopedia();
+    if (externalCount) {
+      // One-time background migration: copy remote Wikimedia teaching images into
+      // the private Dropbox library, rewrite content.json, then reload once.
+      setTimeout(async()=>{
+        try {
+          const result=await localizeTeachingImages(content);
+          if (result.changed) {
+            localStorage.setItem('photopedia-localized-images-v1',String(Date.now()));
+            setTimeout(()=>location.reload(),800);
+          }
+        } catch(e) {
+          console.error('Image localization failed',e);
+          setSync('Dropbox synced; image import incomplete','error');
+        }
+      },700);
+    }
   }
 
   function showMissingKey() {
