@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f3efe8" />
+  <title>Photopedia</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-wrap">
+        <button class="icon-btn mobile-only" id="closeSidebar" aria-label="Close navigation">×</button>
+        <div>
+          <div class="brand">Photopedia</div>
+          <div class="tagline">A personal photography reference</div>
+        </div>
+      </div>
+
+      <label class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input id="searchInput" type="search" placeholder="Search Photopedia…" autocomplete="off" />
+      </label>
+      <div id="searchResults" class="search-results hidden"></div>
+
+      <nav id="nav" class="nav"></nav>
+
+      <div class="sidebar-footer">
+        <div>V0.15 prototype</div>
+        <div>Local-first · Dropbox-ready</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn mobile-only" id="openSidebar" aria-label="Open navigation">☰</button>
+        <button class="back-btn" id="backBtn" aria-label="Go back">← <span>Back</span></button>
+        <div class="crumbs" id="crumbs"></div>
+        <button class="star-btn hidden" id="starBtn" aria-label="Star this entry" title="Star this entry"><span aria-hidden="true">☆</span></button>
+        <div class="font-size-control" aria-label="Article font size">
+          <span class="font-label" title="Text size">Aa</span>
+          <select id="fontSizeSelect" aria-label="Article font size">
+            <option value="small">Small</option>
+            <option value="default">Default</option>
+            <option value="large">Large</option>
+            <option value="xlarge">Extra Large</option>
+          </select>
+        </div>
+        <button class="icon-btn" id="focusSearch" aria-label="Search">⌕</button>
+      </header>
+
+      <div class="content-grid">
+        <article class="article" id="article"></article>
+        <aside class="context" id="context"></aside>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="imageDialog" class="image-dialog">
+    <button class="image-close" id="imageClose" aria-label="Close image">×</button>
+    <img id="imageDialogImg" alt="" />
+    <div id="imageDialogCaption" class="image-dialog-caption"></div>
+  </dialog>
+
+  <dialog id="noteDialog">
+    <form method="dialog" class="note-form" id="noteForm">
+      <div class="dialog-head">
+        <div>
+          <div class="eyebrow">My note</div>
+          <h2 id="noteTitle">Add a note</h2>
+        </div>
+        <button class="icon-btn" value="cancel" aria-label="Close">×</button>
+      </div>
+      <textarea id="noteText" rows="8" placeholder="Record what you discovered, preferred settings, questions to revisit…"></textarea>
+      <div class="dialog-actions">
+        <button class="btn secondary" value="cancel">Cancel</button>
+        <button class="btn" id="saveNoteBtn" value="default">Save note</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="content.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
