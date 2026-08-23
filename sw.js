@@ -1,26 +1,10 @@
-const CACHE='photopedia-v1.0.5-shell';
-const CORE=['./','./index.html','./styles.css','./config.js','./app.js','./dropbox.js','./manifest.webmanifest'];
-self.addEventListener('install',e=>e.waitUntil(
-  caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())
-));
-self.addEventListener('activate',e=>e.waitUntil(
-  caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())
-));
-self.addEventListener('fetch',e=>{
-  if(e.request.method!=='GET') return;
-  const url=new URL(e.request.url);
-  if(url.origin!==self.location.origin) return;
-  // Shell/navigation: network first so GitHub deployments become visible immediately.
-  const isShell=e.request.mode==='navigate' || /\/(?:index\.html|app\.js|dropbox\.js|styles\.css|config\.js|manifest\.webmanifest)$/.test(url.pathname);
-  if(isShell){
-    e.respondWith(fetch(e.request).then(response=>{
-      if(response&&response.ok){const copy=response.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));}
-      return response;
-    }).catch(()=>caches.match(e.request)));
-    return;
-  }
-  e.respondWith(caches.match(e.request).then(cached=>cached||fetch(e.request).then(response=>{
-    if(response&&response.ok){const copy=response.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));}
-    return response;
-  })));
-});
+const RETIRE='photopedia-v1.0.6-retire';
+self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{
+  const keys=await caches.keys();
+  await Promise.all(keys.filter(k=>k.startsWith('photopedia-')).map(k=>caches.delete(k)));
+  await self.clients.claim();
+  await self.registration.unregister();
+})()));
+// Intentionally no fetch handler: the network owns the shell while V1.x is
+// being actively iterated. Photopedia's private content cache remains local.

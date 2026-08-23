@@ -205,6 +205,24 @@
 
   function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
+  async function resolveTeachingImageUrl(url) {
+    if (!/commons\.wikimedia\.org\/wiki\/Special:Redirect\/file\//i.test(url)) return url;
+    const encoded = url.split('/file/').pop().split(/[?#]/)[0];
+    let filename = encoded;
+    try { filename = decodeURIComponent(encoded); } catch {}
+    const api = 'https://commons.wikimedia.org/w/api.php?' + new URLSearchParams({
+      action:'query', format:'json', origin:'*', redirects:'1',
+      prop:'imageinfo', iiprop:'url', titles:`File:${filename}`
+    }).toString();
+    const res = await fetch(api, { cache:'no-store' });
+    if (!res.ok) throw new Error(`Could not resolve Wikimedia image URL (${res.status}).`);
+    const data = await res.json();
+    const page = Object.values(data?.query?.pages || {})[0];
+    const direct = page?.imageinfo?.[0]?.url;
+    if (!direct) throw new Error('Wikimedia did not return a direct image URL.');
+    return direct;
+  }
+
   async function dbxSaveUrl(path, url) {
     const token = await refreshIfNeeded();
     const client = new Dropbox.Dropbox({ accessToken: token });
@@ -254,7 +272,8 @@
         const dropboxPath = `/assets/commons/${filename}`;
         // Ask Dropbox's servers to fetch the public image URL directly. This
         // avoids browser CORS restrictions that prevented the earlier importer.
-        await dbxSaveUrl(dropboxPath, url);
+        const sourceUrl = await resolveTeachingImageUrl(url);
+        await dbxSaveUrl(dropboxPath, sourceUrl);
         replacements.set(url, `assets/commons/${filename}`);
       } catch (e) {
         console.warn('Could not localize image', url, e);
@@ -353,7 +372,10 @@
           const result=await localizeTeachingImages(content);
           if (result.changed) {
             localStorage.setItem('photopedia-localized-images-v1',String(Date.now()));
-            setTimeout(()=>location.reload(),800);
+            // Keep the current screen in place. The shared entries object is
+            // updated in memory, and newly-local paths are converted to private
+            // Dropbox-backed image placeholders for subsequent renders.
+            privatizeLocalAssets(content);
           }
         } catch(e) {
           console.error('Image localization failed',e);
