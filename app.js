@@ -20,6 +20,8 @@ const imageDialogImg = $('#imageDialogImg');
 const imageDialogCaption = $('#imageDialogCaption');
 let renderingHistory = false;
 
+function closeMobileSidebar(){ if(innerWidth<781) sidebar.classList.remove('open'); }
+
 function esc(s=''){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function getNotes(){try{return JSON.parse(localStorage.getItem('photopedia-notes')||'{}')}catch{return {}}}
 function setNotes(n){localStorage.setItem('photopedia-notes',JSON.stringify(n));window.PhotopediaDropbox?.savePersonal('notes.json',n)}
@@ -56,7 +58,7 @@ function buildNav(){
     const count=id==='notebook'?Object.keys(getNotes()).length:id==='starred'?getStars().length:Object.values(entries).filter(e=>e.section===id).length;
     return `<button class="nav-item" data-section="${id}"><span>${label}</span>${id!=='home'?`<span class="nav-count">${count}</span>`:''}</button>`
   }).join('')}</div>`).join('');
-  nav.querySelectorAll('[data-section]').forEach(b=>b.onclick=()=>showSection(b.dataset.section));
+  nav.querySelectorAll('[data-section]').forEach(b=>b.onclick=()=>{showSection(b.dataset.section);closeMobileSidebar();});
   updateActiveNav();
 }
 function updateActiveNav(){nav.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.section===state.section))}
@@ -115,7 +117,7 @@ function showHome(){
     <div class="home-card" data-go="lab"><div class="eyebrow">Lab</div><h3>Learn by seeing</h3><p>Controlled experiments that make technical ideas tangible.</p></div>
     <div class="home-card" data-go="challenges"><div class="eyebrow">Challenges</div><h3>Go make photographs</h3><p>Daily prompts and weekly projects designed to turn ideas into practice.</p></div>
   </div><h2>Start a rabbit hole</h2><div class="topic-list">${['exposure','aperture','shutter-speed','iso','depth-of-field','computational-photography'].map(topicCard).join('')}</div>`;
-  context.innerHTML=`<div class="context-section"><div class="eyebrow">V0.16</div><h3>What this prototype tests</h3><div class="context-note">Navigation, cross-linking, article density, gear integration, search, field guides, Labs and personal notes. The private library is loaded from Dropbox after authentication; GitHub hosts only the application shell.</div></div>`;
+  context.innerHTML=`<div class="context-section"><div class="eyebrow">V1.0</div><h3>Private, connected reference</h3><div class="context-note">Your Photopedia library loads privately from Dropbox after sign-in. GitHub Pages hosts only the application shell; notes, stars and reading preferences sync through Dropbox.</div></div>`;
   wireDynamic();
 }
 
@@ -191,8 +193,8 @@ function showGear(){
 function showNotebook(){
   state.section='notebook';state.current='notebook';setHash('notebook');updateActiveNav();setCrumbs([{label:'Notebook'}]);
   const notes=getNotes(); const ids=Object.keys(notes).filter(id=>entries[id]&&notes[id].trim());
-  article.innerHTML=`<div class="eyebrow">Personal layer</div><h1>Notebook</h1><p class="deck">Your observations stay attached to the concepts and gear that gave rise to them.</p>${ids.length?`<div class="topic-list">${ids.map(id=>`<div class="topic-row" data-entry="${id}"><strong>${entries[id].title}</strong><span>${esc(notes[id].slice(0,110))}${notes[id].length>110?'…':''}</span></div>`).join('')}</div>`:`<div class="brief"><h3>No notes yet</h3><p>Open any entry and choose <strong>Add my note</strong>. Notes in this prototype are stored only in this browser.</p></div>`}`;
-  context.innerHTML=`<div class="context-section"><div class="eyebrow">Later</div><h3>Dropbox sync</h3><div class="context-note">Notes are ordinary JSON data in the private Photopedia Dropbox library and are cached locally for speed.</div></div>`;
+  article.innerHTML=`<div class="eyebrow">Personal layer</div><h1>Notebook</h1><p class="deck">Your observations stay attached to the concepts and gear that gave rise to them.</p>${ids.length?`<div class="topic-list">${ids.map(id=>`<div class="topic-row" data-entry="${id}"><strong>${entries[id].title}</strong><span>${esc(notes[id].slice(0,110))}${notes[id].length>110?'…':''}</span></div>`).join('')}</div>`:`<div class="brief"><h3>No notes yet</h3><p>Open any entry and choose <strong>Add my note</strong>. Notes are cached locally for speed and synchronized with your private Dropbox library.</p></div>`}`;
+  context.innerHTML=`<div class="context-section"><div class="eyebrow">Dropbox</div><h3>Synced personal layer</h3><div class="context-note">Notes, stars and reading preferences are ordinary data in your private Photopedia Dropbox library and are cached locally for speed.</div></div>`;
   wireDynamic();
 }
 
@@ -223,10 +225,10 @@ $('#saveNoteBtn').addEventListener('click',e=>{
 });
 
 function wireDynamic(){
-  document.querySelectorAll('[data-entry]').forEach(el=>el.onclick=()=>showEntry(el.dataset.entry));
-  document.querySelectorAll('[data-go]').forEach(el=>el.onclick=()=>showSection(el.dataset.go));
-  document.querySelectorAll('[data-go-entry]').forEach(el=>el.onclick=()=>showEntry(el.dataset.goEntry));
-  document.querySelectorAll('[data-section-jump]').forEach(el=>el.onclick=()=>showSection(el.dataset.sectionJump));
+  document.querySelectorAll('[data-entry]').forEach(el=>el.onclick=()=>{showEntry(el.dataset.entry);closeMobileSidebar();});
+  document.querySelectorAll('[data-go]').forEach(el=>el.onclick=()=>{showSection(el.dataset.go);closeMobileSidebar();});
+  document.querySelectorAll('[data-go-entry]').forEach(el=>el.onclick=()=>{showEntry(el.dataset.goEntry);closeMobileSidebar();});
+  document.querySelectorAll('[data-section-jump]').forEach(el=>el.onclick=()=>{showSection(el.dataset.sectionJump);closeMobileSidebar();});
   window.PhotopediaDropbox?.hydrateImages(document);
   document.querySelectorAll('img.zoomable').forEach(img=>{
     img.onclick=()=>{
@@ -251,29 +253,30 @@ function doSearch(q){
   }).filter(x=>x[2]>0).sort((a,b)=>b[2]-a[2]).slice(0,8);
   searchResults.innerHTML=scored.length?scored.map(([id,e])=>`<div class="search-item" data-search-entry="${id}"><strong>${e.title}</strong><span>${e.type} · ${e.category}</span></div>`).join(''):`<div class="search-item"><span>No matching entry yet.</span></div>`;
   searchResults.classList.remove('hidden');
-  searchResults.querySelectorAll('[data-search-entry]').forEach(el=>el.onclick=()=>{showEntry(el.dataset.searchEntry);searchResults.classList.add('hidden');searchInput.value=''});
+  searchResults.querySelectorAll('[data-search-entry]').forEach(el=>el.onclick=()=>{showEntry(el.dataset.searchEntry);searchResults.classList.add('hidden');searchInput.value='';closeMobileSidebar()});
 }
 searchInput.addEventListener('input',e=>doSearch(e.target.value));
 searchInput.addEventListener('keydown',e=>{if(e.key==='Escape'){searchInput.value='';searchResults.classList.add('hidden')}});
 $('#focusSearch').onclick=()=>{if(innerWidth<781)sidebar.classList.add('open');setTimeout(()=>searchInput.focus(),30)};
 $('#openSidebar').onclick=()=>sidebar.classList.add('open');
-$('#closeSidebar').onclick=()=>sidebar.classList.remove('open');
+$('#closeSidebar').onclick=closeMobileSidebar;
 document.addEventListener('click',e=>{if(innerWidth<781&&sidebar.classList.contains('open')&&!sidebar.contains(e.target)&&e.target.id!=='openSidebar')sidebar.classList.remove('open')});
 
 
 const fontSizeSelect = $('#fontSizeSelect');
+const mobileFontSizeSelect = $('#mobileFontSizeSelect');
 const fontSizes = {small:'15px',default:'16.5px',large:'18px',xlarge:'20px'};
-function applyFontSize(size){
+function applyFontSize(size, save=true){
   const safe=fontSizes[size]?size:'default';
   document.documentElement.style.setProperty('--article-font-size',fontSizes[safe]);
   if(fontSizeSelect) fontSizeSelect.value=safe;
+  if(mobileFontSizeSelect) mobileFontSizeSelect.value=safe;
   localStorage.setItem('photopedia-font-size',safe);
-  window.PhotopediaDropbox?.savePersonal('preferences.json',{fontSize:safe});
+  if(save) window.PhotopediaDropbox?.savePersonal('preferences.json',{fontSize:safe});
 }
-if(fontSizeSelect){
-  applyFontSize(localStorage.getItem('photopedia-font-size')||'default');
-  fontSizeSelect.addEventListener('change',e=>applyFontSize(e.target.value));
-}
+applyFontSize(localStorage.getItem('photopedia-font-size')||'default', false);
+fontSizeSelect?.addEventListener('change',e=>applyFontSize(e.target.value));
+mobileFontSizeSelect?.addEventListener('change',e=>applyFontSize(e.target.value));
 
 if(backBtn) backBtn.addEventListener('click',goBack);
 window.addEventListener('popstate',renderFromLocation);

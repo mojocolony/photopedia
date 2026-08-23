@@ -190,7 +190,7 @@
     localStorage.setItem('photopedia-starred',JSON.stringify(Array.isArray(stars)?stars:[]));
     if(prefs?.fontSize) localStorage.setItem('photopedia-font-size',prefs.fontSize);
     // A harmless write verifies that content.write is working.
-    await saveJSON('/personal/photopedia.json',{libraryVersion:'0.16',lastConnected:new Date().toISOString()});
+    await saveJSON('/personal/photopedia.json',{libraryVersion:'1.0',lastConnected:new Date().toISOString()});
   }
 
   async function loadLibrary() {

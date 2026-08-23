@@ -13,6 +13,7 @@
     <div class="auth-card">
       <div class="brand auth-brand">Photopedia</div>
       <p class="auth-deck">Your personal photography reference.</p>
+      <div class="auth-version">V1.0 · Private Dropbox library</div>
       <div id="authMessage" class="auth-message">Connect Dropbox to load your private Photopedia library.</div>
       <button class="btn auth-btn" id="dropboxSignIn">Sign in with Dropbox</button>
       <div id="authSetup" class="auth-setup hidden"></div>
@@ -37,8 +38,21 @@
 
       <nav id="nav" class="nav"></nav>
 
+      <div class="sidebar-mobile-tools">
+        <div class="sidebar-tool-label">Reading size</div>
+        <label class="sidebar-font-control">
+          <span class="font-label">Aa</span>
+          <select id="mobileFontSizeSelect" aria-label="Article font size">
+            <option value="small">Small</option>
+            <option value="default">Default</option>
+            <option value="large">Large</option>
+            <option value="xlarge">Extra Large</option>
+          </select>
+        </label>
+      </div>
+
       <div class="sidebar-footer">
-        <div>V0.16 · Dropbox</div>
+        <div class="version-line">V1.0 · Private library</div>
         <div class="dropbox-status"><span class="sync-dot" id="syncDot"></span><span id="syncText">Dropbox connected</span></div>
         <button class="sidebar-link-btn" id="dropboxSignOut">Sign out</button>
       </div>
@@ -46,7 +60,8 @@
 
     <main class="main">
       <header class="topbar">
-        <button class="icon-btn mobile-only" id="openSidebar" aria-label="Open navigation">☰</button>
+        <button class="icon-btn mobile-only mobile-menu-btn" id="openSidebar" aria-label="Open navigation">☰</button>
+        <div class="mobile-title mobile-only">Photopedia</div>
         <button class="back-btn" id="backBtn" aria-label="Go back">← <span>Back</span></button>
         <div class="crumbs" id="crumbs"></div>
         <button class="star-btn hidden" id="starBtn" aria-label="Star this entry" title="Star this entry"><span aria-hidden="true">☆</span></button>

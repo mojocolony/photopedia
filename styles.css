@@ -37,7 +37,7 @@ a{color:inherit}
 dialog{border:1px solid var(--line);border-radius:18px;padding:0;width:min(580px,calc(100vw - 28px));box-shadow:var(--shadow);background:var(--paper)}dialog::backdrop{background:rgba(35,35,32,.32);backdrop-filter:blur(3px)}.note-form{padding:22px}.dialog-head{display:flex;justify-content:space-between;align-items:flex-start}.note-form h2{font-family:Georgia,serif;font-weight:500;margin:5px 0 18px}.note-form textarea{width:100%;resize:vertical;border:1px solid var(--line);border-radius:12px;padding:12px;background:white;color:var(--ink);outline:none}.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
 .mobile-only{display:none}
 @media(max-width:1100px){.content-grid{grid-template-columns:minmax(0,760px);padding:50px 34px 80px}.context{position:static;display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:25px}.context-section{border:1px solid var(--line);border-radius:14px;padding:16px;background:rgba(255,255,255,.35);margin:0}}
-@media(max-width:780px){.mobile-only{display:inline-block}.app-shell{display:block}.sidebar{position:fixed;left:0;top:0;transform:translateX(-102%);transition:transform .2s ease;width:min(86vw,310px);box-shadow:var(--shadow)}.sidebar.open{transform:translateX(0)}.topbar{padding:0 12px}.content-grid{padding:34px 20px 70px}.article h1{font-size:41px}.deck{font-size:19px}.article p,.article li{font-size:16px;line-height:1.7}.home-cards,.topic-list,.context{grid-template-columns:1fr}.visual-grid{grid-template-columns:repeat(3,1fr)}.visual-grid>div:nth-child(n+4){display:none}}
+@media(max-width:780px){.mobile-only{display:inline-block}.app-shell{display:block}.sidebar{position:fixed;left:0;top:0;transform:translateX(-102%);transition:transform .2s ease;width:min(86vw,310px);box-shadow:var(--shadow)}.sidebar.open{transform:translateX(0)}.topbar{padding:0 12px}.content-grid{padding:34px 20px 70px}.article h1{font-size:41px}.deck{font-size:19px}.article p,.article li{font-size:var(--article-font-size);line-height:1.7}.home-cards,.topic-list,.context{grid-template-columns:1fr}.visual-grid{grid-template-columns:repeat(3,1fr)}.visual-grid>div:nth-child(n+4){display:none}}
 
 /* Teaching photographs */
 .photo-example{margin:26px 0 34px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--paper);box-shadow:0 8px 28px rgba(50,45,38,.06)}
@@ -141,3 +141,89 @@ dialog{border:1px solid var(--line);border-radius:18px;padding:0;width:min(580px
 .auth-btn{width:100%;padding:12px 16px}.auth-setup{margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:14px;background:#f2eee7;font-size:13px;line-height:1.55}.auth-setup p{margin-bottom:0}.auth-setup code{font-size:12px;background:rgba(255,255,255,.7);padding:2px 5px;border-radius:5px}
 .dropbox-status{display:flex;align-items:center;gap:7px;margin-top:6px}.sync-dot{width:8px;height:8px;border-radius:50%;background:#63806a}.sync-dot[data-state="busy"]{background:#9b7d56}.sync-dot[data-state="error"]{background:#a24e47}
 .sidebar-link-btn{border:0;background:transparent;padding:5px 0;margin-top:3px;color:var(--muted);font-size:11px;text-decoration:underline;cursor:pointer}
+
+
+/* V1.0 — responsive reading, private-library polish */
+.auth-version{display:inline-flex;align-items:center;margin:-12px 0 22px;padding:6px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:11px;background:#f4f0e9}
+.version-line{font-weight:650;color:#555750}
+.mobile-title,.sidebar-mobile-tools{display:none}
+.icon-btn,.back-btn,.star-btn{min-width:40px;min-height:40px}
+.nav-item{min-height:44px}
+.article table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-collapse:collapse}
+.article img{max-width:100%;height:auto}
+.manual-figure img,.photo-example img{object-position:center}
+.image-close{min-width:44px;min-height:44px}
+
+/* Compact three-column reference layout for landscape tablets / smaller laptops. */
+@media(min-width:1101px) and (max-width:1400px){
+  :root{--sidebar:230px;--reading:610px;--context:200px}
+  .sidebar{padding-left:14px;padding-right:14px}
+  .content-grid{gap:24px;padding:46px 28px 80px}
+  .article h1{font-size:46px}
+  .deck{font-size:20px}
+  .context{font-size:12.5px}
+}
+
+/* Portrait tablets keep the persistent library rail but prioritize the article. */
+@media(min-width:781px) and (max-width:1100px){
+  :root{--sidebar:230px}
+  .sidebar{padding-left:14px;padding-right:14px}
+  .content-grid{padding:42px 28px 76px}
+  .article h1{font-size:46px}
+}
+
+@media(max-width:780px){
+  .mobile-only{display:inline-grid}
+  .app-shell{display:block}
+  .sidebar{width:min(88vw,330px);padding:20px 16px 18px;z-index:20}
+  .brand-wrap{align-items:center;margin-bottom:20px}
+  #closeSidebar{width:44px;height:44px;place-items:center}
+  .search-wrap{height:48px}
+  .search-wrap input{font-size:16px}
+  .nav{margin-top:20px}
+  .nav-item{min-height:48px;padding:11px 12px;font-size:15px}
+  .nav-count{font-size:12px}
+  .sidebar-mobile-tools{display:block;margin-top:26px;padding:16px 10px 0;border-top:1px solid var(--line)}
+  .sidebar-tool-label{font-size:10px;text-transform:uppercase;letter-spacing:.11em;color:var(--muted);margin-bottom:8px}
+  .sidebar-font-control{height:46px;display:flex;align-items:center;gap:9px;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:0 11px}
+  .sidebar-font-control select{flex:1;border:0;outline:0;background:transparent;font-size:16px;color:var(--ink)}
+  .sidebar-footer{margin-top:18px;padding-top:16px;font-size:12px}
+  .dropbox-status{min-height:32px}
+  .sidebar-link-btn{min-height:40px;font-size:13px;text-align:left}
+
+  .topbar{height:auto;min-height:100px;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;grid-template-rows:48px 44px;gap:2px 8px;padding:4px 10px 5px;align-items:center}
+  .mobile-menu-btn{grid-column:1;grid-row:1;width:44px;height:44px;place-items:center;font-size:22px}
+  .mobile-title{display:block!important;grid-column:2;grid-row:1;text-align:center;font-family:Georgia,serif;font-size:20px;letter-spacing:-.2px}
+  .star-btn{grid-column:3;grid-row:1;width:44px;height:44px;justify-self:end;border:0;background:transparent;font-size:23px}
+  .back-btn{grid-column:1;grid-row:2;width:44px;height:44px;padding:0;display:grid;place-items:center;border:0;background:transparent;font-size:20px}
+  .back-btn span{display:none}
+  .back-btn:disabled{visibility:hidden}
+  .crumbs{grid-column:2 / 4;grid-row:2;min-width:0;font-size:12px;gap:5px;padding-right:6px}
+  .crumbs .crumb-link,.crumbs .crumb-current{overflow:hidden;text-overflow:ellipsis}
+  .font-size-control,#focusSearch{display:none}
+
+  .content-grid{padding:28px 18px 68px}
+  .article h1{font-size:clamp(34px,10vw,42px);line-height:1.04;letter-spacing:-.8px}
+  .article h2{font-size:27px;margin-top:40px}
+  .article h3{font-size:18px}
+  .deck{font-size:19px;line-height:1.48;margin-bottom:26px}
+  .article p,.article li{font-size:var(--article-font-size);line-height:1.72}
+  .brief{padding:19px 18px;margin:23px 0}
+  .callout{font-size:18px;padding:16px 17px}
+  .photo-caption,.figure-caption,.manual-figure figcaption{font-size:max(13.5px,calc(var(--article-font-size) * .82));line-height:1.55}
+  .photo-caption span,.manual-figure figcaption span{font-size:12.5px}
+  .source-note{font-size:13px;line-height:1.6}
+  .context-note{font-size:13.5px}
+  .context-link{min-height:42px;display:flex;align-items:center;font-size:14px}
+  .context-section{padding:17px}
+  .camera-state-grid{grid-template-columns:1fr}
+  .camera-state-item:nth-child(odd){border-right:0}
+  .camera-state-item{padding:12px 14px}
+  .camera-state-item strong{font-size:14px}
+  .figure-grid.two,.figure-grid.three,.figure-grid.four,.compare-panels,.compare-panels.three,.lens-grid,.focus-layers,.key-grid,.workflow,.trouble-grid,.spec-grid,.gesture-grid,.setup-strip,.swatch-grid{grid-template-columns:1fr}
+  .home-card,.topic-row,.manual-card,.device-card,.starred-card{min-height:48px}
+  .image-dialog{width:100vw;max-height:100vh;height:100vh;border-radius:0;padding:8px}
+  .image-dialog img{max-height:84vh}
+  .image-close{width:46px;height:46px}
+  .note-form textarea{font-size:16px}
+}
