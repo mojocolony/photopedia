@@ -1,3 +1,4 @@
+window.startPhotopedia = function(){
 const DB = window.PHOTOPEDIA_CONTENT;
 const entries = DB.entries;
 const state = { current: 'home', section: 'home' };
@@ -21,10 +22,10 @@ let renderingHistory = false;
 
 function esc(s=''){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function getNotes(){try{return JSON.parse(localStorage.getItem('photopedia-notes')||'{}')}catch{return {}}}
-function setNotes(n){localStorage.setItem('photopedia-notes',JSON.stringify(n))}
+function setNotes(n){localStorage.setItem('photopedia-notes',JSON.stringify(n));window.PhotopediaDropbox?.savePersonal('notes.json',n)}
 function noteFor(id){return getNotes()[id]||''}
 function getStars(){try{const v=JSON.parse(localStorage.getItem('photopedia-starred')||'[]');return Array.isArray(v)?v:[]}catch{return []}}
-function setStars(ids){localStorage.setItem('photopedia-starred',JSON.stringify([...new Set(ids)]))}
+function setStars(ids){const clean=[...new Set(ids)];localStorage.setItem('photopedia-starred',JSON.stringify(clean));window.PhotopediaDropbox?.savePersonal('starred.json',clean)}
 function isStarred(id){return getStars().includes(id)}
 function toggleStar(id){
   if(!entries[id]) return;
@@ -114,7 +115,7 @@ function showHome(){
     <div class="home-card" data-go="lab"><div class="eyebrow">Lab</div><h3>Learn by seeing</h3><p>Controlled experiments that make technical ideas tangible.</p></div>
     <div class="home-card" data-go="challenges"><div class="eyebrow">Challenges</div><h3>Go make photographs</h3><p>Daily prompts and weekly projects designed to turn ideas into practice.</p></div>
   </div><h2>Start a rabbit hole</h2><div class="topic-list">${['exposure','aperture','shutter-speed','iso','depth-of-field','computational-photography'].map(topicCard).join('')}</div>`;
-  context.innerHTML=`<div class="context-section"><div class="eyebrow">V0.15</div><h3>What this prototype tests</h3><div class="context-note">Navigation, cross-linking, article density, gear integration, search, field guides, Labs and personal notes. Dropbox is intentionally not connected yet.</div></div>`;
+  context.innerHTML=`<div class="context-section"><div class="eyebrow">V0.16</div><h3>What this prototype tests</h3><div class="context-note">Navigation, cross-linking, article density, gear integration, search, field guides, Labs and personal notes. The private library is loaded from Dropbox after authentication; GitHub hosts only the application shell.</div></div>`;
   wireDynamic();
 }
 
@@ -156,7 +157,7 @@ function showStarred(){
   const sectionOrder=['learn','gear','field','lab','challenges'];
   const groups=sectionOrder.map(sec=>[sec,ids.filter(id=>entries[id].section===sec)]).filter(([,xs])=>xs.length);
   article.innerHTML=`<div class="eyebrow">Working set</div><h1>Starred</h1><p class="deck">Keep the entries you are using right now in one easy-to-reach place.</p>${ids.length?groups.map(([sec,xs])=>`<section class="starred-group"><div class="eyebrow">${sectionLabel(sec)}</div><h2>${sectionLabel(sec)}</h2><div class="starred-grid">${xs.map(id=>{const e=entries[id];return `<div class="starred-card" data-entry="${id}"><div><strong>${e.title}</strong><span>${e.type} · ${e.category}</span></div><span class="starred-mark" aria-hidden="true">★</span></div>`}).join('')}</div></section>`).join(''):`<div class="brief"><h3>Nothing starred yet</h3><p>Open any Photopedia entry and click the star in the top bar. It will stay here until you remove it.</p></div>`}`;
-  context.innerHTML=`<div class="context-section"><div class="eyebrow">Working set</div><h3>${ids.length} starred ${ids.length===1?'entry':'entries'}</h3><div class="context-note">Stars are stored locally in this browser for now, just like prototype notes.</div></div>`;
+  context.innerHTML=`<div class="context-section"><div class="eyebrow">Working set</div><h3>${ids.length} starred ${ids.length===1?'entry':'entries'}</h3><div class="context-note">Stars are cached locally for speed and synchronized to your Photopedia Dropbox folder.</div></div>`;
   wireDynamic();
 }
 
@@ -191,7 +192,7 @@ function showNotebook(){
   state.section='notebook';state.current='notebook';setHash('notebook');updateActiveNav();setCrumbs([{label:'Notebook'}]);
   const notes=getNotes(); const ids=Object.keys(notes).filter(id=>entries[id]&&notes[id].trim());
   article.innerHTML=`<div class="eyebrow">Personal layer</div><h1>Notebook</h1><p class="deck">Your observations stay attached to the concepts and gear that gave rise to them.</p>${ids.length?`<div class="topic-list">${ids.map(id=>`<div class="topic-row" data-entry="${id}"><strong>${entries[id].title}</strong><span>${esc(notes[id].slice(0,110))}${notes[id].length>110?'…':''}</span></div>`).join('')}</div>`:`<div class="brief"><h3>No notes yet</h3><p>Open any entry and choose <strong>Add my note</strong>. Notes in this prototype are stored only in this browser.</p></div>`}`;
-  context.innerHTML=`<div class="context-section"><div class="eyebrow">Later</div><h3>Dropbox sync</h3><div class="context-note">In the production architecture, these notes can become ordinary files in the Photopedia Dropbox library rather than opaque browser data.</div></div>`;
+  context.innerHTML=`<div class="context-section"><div class="eyebrow">Later</div><h3>Dropbox sync</h3><div class="context-note">Notes are ordinary JSON data in the private Photopedia Dropbox library and are cached locally for speed.</div></div>`;
   wireDynamic();
 }
 
@@ -226,6 +227,7 @@ function wireDynamic(){
   document.querySelectorAll('[data-go]').forEach(el=>el.onclick=()=>showSection(el.dataset.go));
   document.querySelectorAll('[data-go-entry]').forEach(el=>el.onclick=()=>showEntry(el.dataset.goEntry));
   document.querySelectorAll('[data-section-jump]').forEach(el=>el.onclick=()=>showSection(el.dataset.sectionJump));
+  window.PhotopediaDropbox?.hydrateImages(document);
   document.querySelectorAll('img.zoomable').forEach(img=>{
     img.onclick=()=>{
       if(!imageDialog) return;
@@ -266,6 +268,7 @@ function applyFontSize(size){
   document.documentElement.style.setProperty('--article-font-size',fontSizes[safe]);
   if(fontSizeSelect) fontSizeSelect.value=safe;
   localStorage.setItem('photopedia-font-size',safe);
+  window.PhotopediaDropbox?.savePersonal('preferences.json',{fontSize:safe});
 }
 if(fontSizeSelect){
   applyFontSize(localStorage.getItem('photopedia-font-size')||'default');
@@ -286,3 +289,5 @@ const firstId=(location.hash||'#home').slice(1);
 try{history.replaceState({photopedia:true,id:firstId,photopediaDepth:0},'',location.href)}catch{}
 renderFromLocation();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+};

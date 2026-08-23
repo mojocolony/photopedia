@@ -132,3 +132,12 @@ dialog{border:1px solid var(--line);border-radius:18px;padding:0;width:min(580px
 .star-btn{width:36px;height:36px;display:inline-grid;place-items:center;border:1px solid var(--line);background:rgba(255,255,255,.5);border-radius:9px;color:#5b5b55;font-size:21px;line-height:1;cursor:pointer;flex:0 0 auto}.star-btn:hover{background:var(--paper)}.star-btn.active{color:#8e6b54;background:#f5eee4;border-color:#d8c6b7}.star-btn span{transform:translateY(-1px)}
 .starred-group{margin:34px 0 42px}.starred-group h2{margin-top:6px}.starred-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.starred-card{display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid var(--line);background:var(--paper);border-radius:14px;padding:16px 17px;cursor:pointer}.starred-card:hover{box-shadow:0 8px 22px rgba(50,45,38,.06);transform:translateY(-1px)}.starred-card strong{display:block;font-size:15px;margin-bottom:5px}.starred-card span{display:block;font-size:12px;color:var(--muted)}.starred-mark{font-size:18px!important;color:#8e6b54!important;flex:0 0 auto}
 @media(max-width:780px){.starred-grid{grid-template-columns:1fr}.star-btn{width:34px;height:34px;font-size:20px}}
+
+/* V0.16 — Dropbox private-library shell */
+.auth-gate{min-height:100vh;display:grid;place-items:center;padding:28px;background:var(--bg)}
+.auth-card{width:min(470px,100%);background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:38px;box-shadow:var(--shadow)}
+.auth-brand{font-size:38px;margin-bottom:8px}.auth-deck{font-family:Georgia,serif;font-size:20px;color:#4a4b46;margin:0 0 26px}
+.auth-message{font-size:14px;line-height:1.55;color:var(--muted);margin-bottom:18px}.auth-message[data-kind="error"]{color:#8c413b}
+.auth-btn{width:100%;padding:12px 16px}.auth-setup{margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:14px;background:#f2eee7;font-size:13px;line-height:1.55}.auth-setup p{margin-bottom:0}.auth-setup code{font-size:12px;background:rgba(255,255,255,.7);padding:2px 5px;border-radius:5px}
+.dropbox-status{display:flex;align-items:center;gap:7px;margin-top:6px}.sync-dot{width:8px;height:8px;border-radius:50%;background:#63806a}.sync-dot[data-state="busy"]{background:#9b7d56}.sync-dot[data-state="error"]{background:#a24e47}
+.sidebar-link-btn{border:0;background:transparent;padding:5px 0;margin-top:3px;color:var(--muted);font-size:11px;text-decoration:underline;cursor:pointer}

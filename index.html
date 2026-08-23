@@ -9,7 +9,17 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="app-shell">
+  <section class="auth-gate" id="authGate">
+    <div class="auth-card">
+      <div class="brand auth-brand">Photopedia</div>
+      <p class="auth-deck">Your personal photography reference.</p>
+      <div id="authMessage" class="auth-message">Connect Dropbox to load your private Photopedia library.</div>
+      <button class="btn auth-btn" id="dropboxSignIn">Sign in with Dropbox</button>
+      <div id="authSetup" class="auth-setup hidden"></div>
+    </div>
+  </section>
+
+  <div class="app-shell hidden" id="appShell">
     <aside class="sidebar" id="sidebar">
       <div class="brand-wrap">
         <button class="icon-btn mobile-only" id="closeSidebar" aria-label="Close navigation">×</button>
@@ -28,8 +38,9 @@
       <nav id="nav" class="nav"></nav>
 
       <div class="sidebar-footer">
-        <div>V0.15 prototype</div>
-        <div>Local-first · Dropbox-ready</div>
+        <div>V0.16 · Dropbox</div>
+        <div class="dropbox-status"><span class="sync-dot" id="syncDot"></span><span id="syncText">Dropbox connected</span></div>
+        <button class="sidebar-link-btn" id="dropboxSignOut">Sign out</button>
       </div>
     </aside>
 
@@ -81,7 +92,9 @@
     </form>
   </dialog>
 
-  <script src="content.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dropbox@10.34.0/dist/Dropbox-sdk.min.js"></script>
+  <script src="config.js"></script>
   <script src="app.js"></script>
+  <script src="dropbox.js"></script>
 </body>
 </html>
