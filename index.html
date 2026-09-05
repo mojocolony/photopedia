@@ -4,8 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#f3efe8" />
+  <meta name="application-name" content="Photopedia" />
+  <meta name="apple-mobile-web-app-title" content="Photopedia" />
   <title>Photopedia</title>
-  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="manifest" href="manifest.webmanifest?v=1.0.10" />
+  <link rel="shortcut icon" href="favicon.ico" />
+  <link rel="icon" type="image/png" sizes="48x48" href="icon-48.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="icon-96.png" />
+  <link rel="icon" type="image/png" sizes="128x128" href="icon-128.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="icon" type="image/png" sizes="256x256" href="icon-256.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
+  <link rel="icon" type="image/png" sizes="1024x1024" href="icon-1024.png" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -13,7 +25,7 @@
     <div class="auth-card">
       <div class="brand auth-brand">Photopedia</div>
       <p class="auth-deck">Your personal photography reference.</p>
-      <div class="auth-version">V1.0.7 · Private Dropbox library</div>
+      <div class="auth-version">V1.0.10 · Private Dropbox library</div>
       <div id="authMessage" class="auth-message">Connect Dropbox to load your private Photopedia library.</div>
       <button class="btn auth-btn" id="dropboxSignIn">Sign in with Dropbox</button>
       <div id="authSetup" class="auth-setup hidden"></div>
@@ -52,8 +64,9 @@
       </div>
 
       <div class="sidebar-footer">
-        <div class="version-line">V1.0.7 · Private library</div>
+        <div class="version-line">V1.0.10 · Private library</div>
         <div class="dropbox-status"><span class="sync-dot" id="syncDot"></span><span id="syncText">Dropbox connected</span></div>
+        <button class="sidebar-link-btn hidden" id="dropboxReconnect">Reconnect Dropbox</button>
         <button class="sidebar-link-btn" id="dropboxSignOut">Sign out</button>
       </div>
     </aside>
