@@ -64,7 +64,7 @@ function buildNav(){
   nav.querySelectorAll('[data-section]').forEach(b=>b.onclick=()=>{showSection(b.dataset.section);closeMobileSidebar();});
   updateActiveNav();
 }
-function updateActiveNav(){nav.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.section===state.section))}
+function updateActiveNav(){nav.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.section===state.section));$('#openSettings')?.classList.toggle('active',state.section==='settings')}
 function setHash(id){
   if(renderingHistory) return;
   const hash='#'+id;
