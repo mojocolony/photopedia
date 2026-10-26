@@ -1,0 +1,249 @@
+/*
+ * Photopedia V1.0.12 — Mobile and small-tablet readability.
+ * Loaded after styles.css. Keeps the established design and Dropbox data model.
+ * The existing Aa setting drives these sizes via --article-font-size.
+ */
+
+/* Tablets: improve reading comfort without changing the desktop layout. */
+@media (max-width: 1100px) {
+  :root {
+    --readable-body: max(18px, calc(var(--article-font-size) + 1px));
+    --readable-ui: max(16px, calc(var(--article-font-size) * .88));
+    --readable-secondary: max(15.5px, calc(var(--article-font-size) * .84));
+    --readable-meta: max(14px, calc(var(--article-font-size) * .75));
+  }
+
+  /* Headline copy must not be the only text that responds to Aa. */
+  .article p,
+  .article li { font-size: var(--readable-body); line-height: 1.66; }
+  .article .eyebrow,
+  .context .eyebrow,
+  .note-form .eyebrow,
+  .nav-group-title { font-size: var(--readable-meta); line-height: 1.4; }
+
+  .photo-caption,
+  .manual-figure figcaption,
+  .figure-caption,
+  .image-dialog-caption { font-size: var(--readable-ui); line-height: 1.6; color: var(--ink); }
+
+  /* Credit lines stay subordinate but are still readable. */
+  .photo-caption span,
+  .manual-figure figcaption span,
+  .source-note { font-size: var(--readable-meta); line-height: 1.55; color: var(--muted); }
+  .figure-caption { color: var(--ink); }
+  .source-note { color: var(--muted); }
+
+  .home-card p,
+  .topic-row span,
+  .manual-card p,
+  .device-card p,
+  .context-note,
+  .challenge-feature p,
+  .challenge-card p,
+  .challenge-philosophy span,
+  .challenge-section > p,
+  .challenge-briefing span,
+  .lab-index-intro span,
+  .lab-record p,
+  .lab-record li,
+  .field-index-intro span,
+  .field-index-card span,
+  .field-scenario-copy span { font-size: var(--readable-secondary); line-height: 1.55; }
+
+  .key-item span,
+  .lens-card span,
+  .focus-layer span,
+  .flow-box span,
+  .compare-panel span,
+  .compare-panel small,
+  .swatch-card span,
+  .spec-grid span,
+  .gesture-grid span,
+  .control-row p,
+  .workflow span,
+  .trouble-grid span,
+  .concept-grid span,
+  .gear-link-card span,
+  .check-grid span,
+  .field-priority-grid span,
+  .field-choice-strip span { font-size: var(--readable-secondary); line-height: 1.55; }
+
+  .key-item strong,
+  .lens-card strong,
+  .focus-layer strong,
+  .flow-box strong,
+  .swatch-card strong,
+  .spec-grid strong,
+  .gesture-grid strong,
+  .workflow strong,
+  .trouble-grid strong,
+  .concept-grid strong,
+  .gear-link-card strong,
+  .challenge-briefing strong,
+  .field-quick-card strong,
+  .field-priority-grid strong,
+  .field-choice-strip strong,
+  .camera-state-item strong { font-size: var(--readable-ui); line-height: 1.4; }
+
+  .manual-card .manual-num,
+  .camera-state-head,
+  .camera-state-item span,
+  .mode-pill,
+  .matrix-head,
+  .setup-step span,
+  .setup-step small,
+  .control-strip span,
+  .aperture-label,
+  .concept-equation span,
+  .raw-pipeline > div span,
+  .compute-pipeline > div span,
+  .aperture-scale small,
+  .stop-line span,
+  .motion-scale small,
+  .iso-scale span,
+  .autoiso-graphic span,
+  .ev-scale span,
+  .fov-strip span,
+  .sensor-stack span,
+  .dr-scale span,
+  .shake span,
+  .bitdepth span,
+  .stop-ladder span,
+  .tonal-range > span,
+  .histogram-demo small,
+  .exposure-sim-grid span,
+  .stop-scale small,
+  .hist-labels,
+  .sensor-frame,
+  .af-timeline span,
+  .shutter-strip span,
+  .ev-card span,
+  .meter-frame span,
+  .hist-card span,
+  .keeper-grid span,
+  .pan-subject,
+  .pan-camera,
+  .af-demo b,
+  .tracking-strip span,
+  .perspective-demo b,
+  .distance-demo b,
+  .wide-scene b,
+  .light-side,
+  .recover span,
+  .compute-pipeline span,
+  .challenge-card-top,
+  .challenge-duration span,
+  .field-index-card em,
+  .field-quick-card span { font-size: var(--readable-meta); line-height: 1.4; }
+
+  .raw-pipeline > div strong,
+  .compute-pipeline > div strong,
+  .exposure-sim-grid strong,
+  .stop-scale span,
+  .bitdepth strong,
+  .fov-strip b,
+  .iso-scale b,
+  .autoiso-graphic strong,
+  .aperture-scale b,
+  .compare-panel strong { font-size: var(--readable-ui); line-height: 1.35; }
+
+  .context,
+  .context-link,
+  .search-item strong,
+  .search-item span,
+  .sidebar-footer,
+  .sidebar-link-btn,
+  .nav-count,
+  .challenge-link,
+  .button,
+  .btn.small { font-size: var(--readable-meta); }
+
+  .context-section h3 { font-size: max(20px, calc(var(--article-font-size) * 1.02)); }
+  .matrix-cell { font-size: var(--readable-ui); }
+  .field-watch li { font-size: var(--readable-body); }
+  .field-scenario-copy { max-width: 92%; }
+  .image-dialog-caption { color: #f0ede7; }
+}
+
+/* Phone and iPad mini portrait: treat the entire screen as a reading surface. */
+@media (max-width: 780px) {
+  :root {
+    --readable-body: max(18.5px, calc(var(--article-font-size) + 2px));
+    --readable-ui: max(17px, calc(var(--article-font-size) * .91));
+    --readable-secondary: max(16px, calc(var(--article-font-size) * .86));
+    --readable-meta: max(15px, calc(var(--article-font-size) * .77));
+  }
+
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  .content-grid { padding: 26px clamp(16px, 3.2vw, 26px) 78px; }
+  .article h1 { line-height: 1.1; }
+  .article h2 { font-size: clamp(29px, 5.2vw, 34px); line-height: 1.2; }
+  .article h3 { font-size: max(21px, calc(var(--article-font-size) * 1.05)); line-height: 1.3; }
+  .deck { font-size: max(21px, calc(var(--article-font-size) + 1px)); line-height: 1.48; }
+  .article p, .article li { line-height: 1.68; overflow-wrap: break-word; }
+  .brief h3 { font-size: 22px; }
+  .brief, .lab-card, .callout { line-height: 1.6; }
+  .callout { font-size: var(--readable-ui); }
+
+  .crumbs { font-size: var(--readable-meta); line-height: 1.3; }
+  .mobile-title { font-size: 23px; }
+  .topbar { grid-template-rows: 50px 48px; }
+  .nav-item { font-size: var(--readable-ui); min-height: 50px; }
+  .nav-count, .sidebar-tool-label, .sidebar-footer, .sidebar-link-btn { font-size: var(--readable-meta); }
+  .sidebar-font-control { min-height: 48px; }
+  .sidebar-font-control select { font-size: 17px; }
+  .search-item { padding: 13px 12px; }
+  .search-item strong { font-size: var(--readable-ui); }
+  .search-item span { font-size: var(--readable-meta); }
+
+  .photo-caption, .manual-figure figcaption { padding: 18px 18px 20px; }
+  .figure-caption { margin-top: 16px; }
+  .photo-caption span, .manual-figure figcaption span { margin-top: 8px; }
+  .photo-example img, .manual-figure img { max-width: 100%; }
+
+  /* Cards must be scannable without zooming. */
+  .home-card, .topic-row, .manual-card, .device-card, .starred-card,
+  .challenge-card, .field-index-card, .context-section { padding: 18px; }
+  .home-card h3, .manual-card h3, .device-card h3 { font-size: 23px; line-height: 1.28; }
+  .topic-row strong, .starred-card strong { font-size: var(--readable-ui); }
+  .challenge-card strong, .field-index-card strong { font-size: 22px; }
+  .context-link, .sidebar-link-btn, .btn, .nav-item { min-height: 44px; }
+  .btn, .btn.small { font-size: var(--readable-ui); padding: 10px 14px; }
+  .note-form textarea { font-size: 17px; line-height: 1.55; }
+  .image-dialog-caption { font-size: var(--readable-ui); }
+
+  /* Clear sequential diagrams: no stranded arrows or 10px step labels. */
+  .concept-equation {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    gap: 9px;
+  }
+  .concept-equation > span {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    padding: 13px 17px;
+    text-align: center;
+    font-size: var(--readable-ui);
+    line-height: 1.4;
+  }
+  .concept-equation > b { align-self: center; transform: rotate(90deg); line-height: 1; }
+  .raw-pipeline, .compute-pipeline { grid-template-columns: minmax(0, 1fr); }
+  .raw-pipeline > div, .compute-pipeline > div { min-width: 0; padding: 17px 14px; }
+  .flow-box { min-height: 0; padding: 17px; }
+  .lab-control-grid li { font-size: var(--readable-body); }
+  .setup-step strong, .control-row strong { font-size: var(--readable-ui); }
+
+  /* Labels that accompany illustrative shapes cannot be clipped. */
+  .stop-scale, .ev-strip, .aperture-scale, .camera-state-grid { min-width: 0; }
+  .source-note { padding: 12px 14px; }
+}
+
+@media (max-width: 480px) {
+  .content-grid { padding: 22px 16px 72px; }
+  .photo-caption, .manual-figure figcaption { padding: 16px; }
+  .field-scenario-copy { max-width: 94%; left: 10px; bottom: 10px; }
+  .dialog-actions .btn { min-height: 46px; }
+}
