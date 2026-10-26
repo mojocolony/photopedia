@@ -54,6 +54,8 @@ function buildNav(){
     ['Explore',[['home','Home'],['starred','Starred']]],
     ['Library',[['learn','Learn'],['gear','Gear'],['field','Field Guide'],['lab','Lab'],['challenges','Challenges'],['notebook','Notebook']]]
   ];
+  const collections = [['landscape','Landscape'],['architecture','Architecture']].filter(([section])=>Object.values(entries).some(e=>e.section===section));
+  if(collections.length) groups.push(['Subject studies',collections]);
   nav.innerHTML = groups.map(([title,items])=>`<div class="nav-group"><div class="nav-group-title">${title}</div>${items.map(([id,label])=>{
     const count=id==='notebook'?Object.keys(getNotes()).length:id==='starred'?getStars().length:Object.values(entries).filter(e=>e.section===id).length;
     return `<button class="nav-item" data-section="${id}"><span>${label}</span>${id!=='home'?`<span class="nav-count">${count}</span>`:''}</button>`
@@ -99,7 +101,7 @@ function renderFromLocation(){
   renderingHistory=true;
   const initial=(location.hash||'#home').slice(1);
   if(entries[initial]) showEntry(initial);
-  else if(['learn','gear','field','lab','challenges','notebook','starred'].includes(initial)) showSection(initial);
+  else if(['learn','gear','field','lab','challenges','notebook','starred','landscape','architecture'].includes(initial)) showSection(initial);
   else showHome();
   renderingHistory=false;
   updateBackButton();
@@ -116,18 +118,36 @@ function showHome(){
     <div class="home-card" data-go="field"><div class="eyebrow">Field Guide</div><h3>What do I do?</h3><p>Start from a real shooting situation and work backward to the photographic decisions.</p></div>
     <div class="home-card" data-go="lab"><div class="eyebrow">Lab</div><h3>Learn by seeing</h3><p>Controlled experiments that make technical ideas tangible.</p></div>
     <div class="home-card" data-go="challenges"><div class="eyebrow">Challenges</div><h3>Go make photographs</h3><p>Daily prompts and weekly projects designed to turn ideas into practice.</p></div>
+    ${Object.values(entries).some(e=>e.section==='landscape')?'<div class="home-card" data-go="landscape"><div class="eyebrow">Landscape</div><h3>Study the land</h3><p>Composition, light, fieldwork and photographers across generations.</p></div>':''}
+    ${Object.values(entries).some(e=>e.section==='architecture')?'<div class="home-card" data-go="architecture"><div class="eyebrow">Architecture</div><h3>Read the built world</h3><p>Geometry, space, people, buildings and photographic histories.</p></div>':''}
   </div><h2>Start a rabbit hole</h2><div class="topic-list">${['exposure','aperture','shutter-speed','iso','depth-of-field','computational-photography'].map(topicCard).join('')}</div>`;
-  context.innerHTML=`<div class="context-section"><div class="eyebrow">V1.0.12</div><h3>Private, connected reference</h3><div class="context-note">Your Photopedia library loads privately from Dropbox after sign-in. GitHub Pages hosts only the application shell; notes, stars and reading preferences sync through Dropbox.</div></div>`;
+  context.innerHTML=`<div class="context-section"><div class="eyebrow">V1.0.13</div><h3>Private, connected reference</h3><div class="context-note">Your Photopedia library loads privately from Dropbox after sign-in. GitHub Pages hosts only the application shell; notes, stars and reading preferences sync through Dropbox.</div></div>`;
   wireDynamic();
 }
 
 function topicCard(id){const e=entries[id];return `<div class="topic-row" data-entry="${id}"><strong>${e.title}</strong><span>${e.category}</span></div>`}
 
+function showSubjectCollection(section){
+  state.section=section;state.current=section;setHash(section);updateActiveNav();
+  const isLand=section==='landscape';
+  const title=isLand?'Landscape Photography':'Architectural Photography';
+  const deck=isLand?'A visual field guide to landscape, light, weather, creative judgment and the photographers who shaped the genre.':'A visual handbook to architecture, geometry, interiors, human use and the photographers who help us understand buildings.';
+  const collection=Object.entries(entries).filter(([,e])=>e.section===section);
+  const orderedGroups=DB[isLand?'landscapeGroups':'architectureGroups'] || [...new Set(collection.map(([,e])=>e.category))];
+  const groups=[...orderedGroups, ...new Set(collection.map(([,e])=>e.category))].filter((g,i,a)=>a.indexOf(g)===i);
+  setCrumbs([{label:title}]);
+  article.innerHTML=`<div class="eyebrow">Subject studies</div><h1>${title}</h1><p class="deck">${deck}</p>
+    <div class="subject-index-intro"><strong>Technique, history and the photographer’s eye</strong><span>Explore practical lessons, the decisions behind representative photographs, historic and contemporary artists, and curated visual journals. Individual topics lead back into Photopedia’s canonical concepts and your gear.</span></div>
+    ${groups.map(group=>{const subset=collection.filter(([,e])=>e.category===group);return subset.length?`<section class="subject-index-group"><h2>${esc(group)}</h2><div class="subject-entry-grid">${subset.map(([id,e])=>`<div class="subject-entry-card" data-entry="${id}"><small>${esc(e.type)}</small><strong>${esc(e.title)}</strong><p>${esc(e.deck)}</p></div>`).join('')}</div></section>`:''}).join('')}`;
+  context.innerHTML=`<div class="context-section"><div class="eyebrow">Reference collection</div><h3>${collection.length} entries</h3><div class="context-note">Study techniques, photographer histories, verified viewing links and Instagram reading lists. Star or annotate individual entries.</div></div>`;
+  wireDynamic();
+}
 function showSection(section){
   if(section==='home') return showHome();
   if(section==='notebook') return showNotebook();
   if(section==='starred') return showStarred();
   if(section==='gear') return showGear();
+  if(section==='landscape'||section==='architecture') return showSubjectCollection(section);
   if(section==='challenges') return showChallenges();
   state.section=section;state.current=section;setHash(section);updateActiveNav();
   const list=Object.entries(entries).filter(([,e])=>e.section===section);
@@ -156,7 +176,7 @@ function showStarred(){
   state.section='starred';state.current='starred';setHash('starred');updateActiveNav();updateStarButton();
   setCrumbs([{label:'Starred'}]);
   const ids=getStars().filter(id=>entries[id]);
-  const sectionOrder=['learn','gear','field','lab','challenges'];
+  const sectionOrder=['learn','gear','field','lab','challenges','landscape','architecture'];
   const groups=sectionOrder.map(sec=>[sec,ids.filter(id=>entries[id].section===sec)]).filter(([,xs])=>xs.length);
   article.innerHTML=`<div class="eyebrow">Working set</div><h1>Starred</h1><p class="deck">Keep the entries you are using right now in one easy-to-reach place.</p>${ids.length?groups.map(([sec,xs])=>`<section class="starred-group"><div class="eyebrow">${sectionLabel(sec)}</div><h2>${sectionLabel(sec)}</h2><div class="starred-grid">${xs.map(id=>{const e=entries[id];return `<div class="starred-card" data-entry="${id}"><div><strong>${e.title}</strong><span>${e.type} · ${e.category}</span></div><span class="starred-mark" aria-hidden="true">★</span></div>`}).join('')}</div></section>`).join(''):`<div class="brief"><h3>Nothing starred yet</h3><p>Open any Photopedia entry and click the star in the top bar. It will stay here until you remove it.</p></div>`}`;
   context.innerHTML=`<div class="context-section"><div class="eyebrow">Working set</div><h3>${ids.length} starred ${ids.length===1?'entry':'entries'}</h3><div class="context-note">Stars are cached locally for speed and synchronized to your Photopedia Dropbox folder.</div></div>`;
@@ -215,7 +235,7 @@ function showEntry(id){
   updateStarButton();
   window.scrollTo({top:0,behavior:'instant'});
 }
-function sectionLabel(s){return ({learn:'Learn',gear:'Gear',field:'Field Guide',lab:'Lab',challenges:'Challenges',notebook:'Notebook',starred:'Starred'})[s]||s}
+function sectionLabel(s){return ({learn:'Learn',gear:'Gear',field:'Field Guide',lab:'Lab',challenges:'Challenges',landscape:'Landscape',architecture:'Architecture',notebook:'Notebook',starred:'Starred'})[s]||s}
 
 function openNote(id){
   noteDialog.dataset.entry=id;noteTitle.textContent=entries[id].title;noteText.value=noteFor(id);noteDialog.showModal();setTimeout(()=>noteText.focus(),20)
