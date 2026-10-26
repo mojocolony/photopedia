@@ -21,7 +21,7 @@
   const authMessage = document.getElementById('authMessage');
   const authSetup = document.getElementById('authSetup');
   const signInBtn = document.getElementById('dropboxSignIn');
-  const reconnectBtn = document.getElementById('dropboxReconnect');
+  let reconnectNeeded = false;
 
   function safeJSON(raw, fallback) { try { return JSON.parse(raw); } catch { return fallback; } }
   function readLibraryCache() {
@@ -51,8 +51,15 @@
   function setSync(text, state='ok') {
     const t=document.getElementById('syncText'); const d=document.getElementById('syncDot');
     if(t) t.textContent=text; if(d) d.dataset.state=state;
+    const st=document.getElementById('settingsSyncText');
+    const sd=document.getElementById('settingsSyncDot');
+    if(st) st.textContent=text; if(sd) sd.dataset.state=state;
   }
-  function showReconnect(show=true) { reconnectBtn?.classList.toggle('hidden', !show); }
+  function showReconnect(show=true) {
+    reconnectNeeded=show;
+    const button=document.getElementById('dropboxReconnect');
+    button?.classList.toggle('hidden', !reconnectNeeded);
+  }
   function savedAuth() { return safeJSON(localStorage.getItem(AUTH_KEY) || 'null', null); }
   function persistAuth(auth) { currentAuth=auth; localStorage.setItem(AUTH_KEY, JSON.stringify(auth)); showReconnect(false); }
   function clearAuth() { currentAuth=null; localStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(VERIFIER_KEY); sessionStorage.removeItem(STATE_KEY); }
@@ -213,12 +220,11 @@
   }
   function setupCollectionImporter() {
     const dialog=document.getElementById('collectionDialog');
-    const button=document.getElementById('importCollectionBtn');
     const input=document.getElementById('collectionFileInput');
     const preview=document.getElementById('collectionPreview');
     const confirm=document.getElementById('collectionConfirm');
     const close=()=>dialog?.close();
-    if(!dialog||!button||!input||!preview||!confirm) return;
+    if(!dialog||!input||!preview||!confirm) return;
     let pending=null,loading=false;
     const report=(message,state='')=>{
       preview.textContent=message;
@@ -229,7 +235,9 @@
       report('Select the content-pack JSON file.');
       dialog.showModal();
     };
-    button.addEventListener('click',open);
+    document.addEventListener('click',e=>{
+      if(e.target.closest('#importCollectionBtn')) open();
+    });
     document.getElementById('collectionCancel')?.addEventListener('click',close);
     document.getElementById('collectionDialogClose')?.addEventListener('click',close);
     input.addEventListener('change',async()=>{
@@ -371,8 +379,10 @@
 
   async function boot() {
     signInBtn?.addEventListener('click',()=>beginAuth().catch(e=>setMessage(e.message,'error')));
-    reconnectBtn?.addEventListener('click',()=>beginAuth().catch(e=>setSync(e.message,'error')));
-    document.getElementById('dropboxSignOut')?.addEventListener('click',signOut);
+    document.addEventListener('click',e=>{
+      if(e.target.closest('#dropboxReconnect')) beginAuth().catch(err=>setSync(err.message,'error'));
+      if(e.target.closest('#dropboxSignOut')) signOut();
+    });
     setupCollectionImporter();
     if(!APP_KEY){showMissingKey();return;}
     try{await handleCallback();}catch(e){console.error(e);clearAuth();setMessage(e.message,'error');return;}
