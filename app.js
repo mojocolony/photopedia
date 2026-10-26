@@ -56,9 +56,10 @@ function buildNav(){
   ];
   const collections = [['landscape','Landscape'],['architecture','Architecture']].filter(([section])=>Object.values(entries).some(e=>e.section===section));
   if(collections.length) groups.push(['Subject studies',collections]);
+  groups.push(['Preferences',[['settings','Settings']]]);
   nav.innerHTML = groups.map(([title,items])=>`<div class="nav-group"><div class="nav-group-title">${title}</div>${items.map(([id,label])=>{
-    const count=id==='notebook'?Object.keys(getNotes()).length:id==='starred'?getStars().length:Object.values(entries).filter(e=>e.section===id).length;
-    return `<button class="nav-item" data-section="${id}"><span>${label}</span>${id!=='home'?`<span class="nav-count">${count}</span>`:''}</button>`
+    const count=id==='settings'?null:id==='notebook'?Object.keys(getNotes()).length:id==='starred'?getStars().length:Object.values(entries).filter(e=>e.section===id).length;
+    return `<button class="nav-item" data-section="${id}"><span>${label}</span>${count!==null&&id!=='home'?`<span class="nav-count">${count}</span>`:''}</button>`
   }).join('')}</div>`).join('');
   nav.querySelectorAll('[data-section]').forEach(b=>b.onclick=()=>{showSection(b.dataset.section);closeMobileSidebar();});
   updateActiveNav();
@@ -101,7 +102,7 @@ function renderFromLocation(){
   renderingHistory=true;
   const initial=(location.hash||'#home').slice(1);
   if(entries[initial]) showEntry(initial);
-  else if(['learn','gear','field','lab','challenges','notebook','starred','landscape','architecture'].includes(initial)) showSection(initial);
+  else if(['learn','gear','field','lab','challenges','notebook','starred','landscape','architecture','settings'].includes(initial)) showSection(initial);
   else showHome();
   renderingHistory=false;
   updateBackButton();
@@ -121,7 +122,7 @@ function showHome(){
     ${Object.values(entries).some(e=>e.section==='landscape')?'<div class="home-card" data-go="landscape"><div class="eyebrow">Landscape</div><h3>Study the land</h3><p>Composition, light, fieldwork and photographers across generations.</p></div>':''}
     ${Object.values(entries).some(e=>e.section==='architecture')?'<div class="home-card" data-go="architecture"><div class="eyebrow">Architecture</div><h3>Read the built world</h3><p>Geometry, space, people, buildings and photographic histories.</p></div>':''}
   </div><h2>Start a rabbit hole</h2><div class="topic-list">${['exposure','aperture','shutter-speed','iso','depth-of-field','computational-photography'].map(topicCard).join('')}</div>`;
-  context.innerHTML=`<div class="context-section"><div class="eyebrow">V1.0.13</div><h3>Private, connected reference</h3><div class="context-note">Your Photopedia library loads privately from Dropbox after sign-in. GitHub Pages hosts only the application shell; notes, stars and reading preferences sync through Dropbox.</div></div>`;
+  context.innerHTML=`<div class="context-section"><div class="eyebrow">V1.0.14</div><h3>Private, connected reference</h3><div class="context-note">Your Photopedia library loads privately from Dropbox after sign-in. GitHub Pages hosts only the application shell; notes, stars and reading preferences sync through Dropbox.</div></div>`;
   wireDynamic();
 }
 
@@ -144,6 +145,7 @@ function showSubjectCollection(section){
 }
 function showSection(section){
   if(section==='home') return showHome();
+  if(section==='settings') return showSettings();
   if(section==='notebook') return showNotebook();
   if(section==='starred') return showStarred();
   if(section==='gear') return showGear();
@@ -160,7 +162,7 @@ function showSection(section){
   } else if(section==='field'){
     const groups=(DB.fieldGroups||[]).map(g=>[g,list.filter(([,x])=>x.category===g)]).filter(([,xs])=>xs.length);
     article.innerHTML=`<div class="eyebrow">Field Guide</div><h1>What do I do?</h1><p class="deck">Start with the situation you are actually standing in. Each guide gives you a fast starting point, explains the reasoning, flags common failure modes and links back to deeper Learn and Lab material.</p><div class="field-index-intro"><strong>Situational, not prescriptive.</strong><span>The settings are starting points. The useful part is understanding which variable matters most so you can adapt when the light, subject or intention changes.</span></div>${groups.map(([g,xs])=>`<section class="field-index-group"><div class="eyebrow">${g}</div><h2>${g}</h2><div class="field-index-grid">${xs.map(([id,x])=>`<div class="field-index-card" data-entry="${id}"><strong>${x.title}</strong><span>${x.deck}</span><em>Open guide →</em></div>`).join('')}</div></section>`).join('')}`;
-    context.innerHTML=`<div class="context-section"><div class="eyebrow">Quick reference</div><h3>${list.length} situations</h3><div class="context-note">Use this section in the field when the question is “What matters here?” rather than “What does this setting mean?”</div></div><div class="context-section"><div class="eyebrow">Reading size</div><h3>Use the Aa selector above</h3><div class="context-note">Your chosen text size now applies to Field Guide prose, checklists, tips and quick-reference material and is remembered in this browser.</div></div>`;
+    context.innerHTML=`<div class="context-section"><div class="eyebrow">Quick reference</div><h3>${list.length} situations</h3><div class="context-note">Use this section in the field when the question is “What matters here?” rather than “What does this setting mean?”</div></div><div class="context-section"><div class="eyebrow">Reading size</div><h3>Change text size in Settings</h3><div class="context-note">Your chosen text size now applies to Field Guide prose, checklists, tips and quick-reference material and is remembered in this browser.</div></div>`;
   } else {
     article.innerHTML=`<div class="eyebrow">${title}</div><h1>${title}</h1><p class="deck">${deck}</p><div class="topic-list">${list.map(([id])=>topicCard(id)).join('')}</div>`;
     context.innerHTML=`<div class="context-section"><div class="eyebrow">Browse</div><h3>${list.length} entries</h3><div class="context-note">Search is global. Entries can appear through aliases such as “DOF,” “f-stop,” “noise,” or “camera shake.”</div></div>`;
@@ -210,6 +212,57 @@ function showGear(){
   wireDynamic();
 }
 
+
+function showSettings(){
+  state.current='settings'; state.section='settings'; setHash('settings'); updateActiveNav();
+  setCrumbs([{label:'Settings'}]);
+  const stored=localStorage.getItem('photopedia-font-size')||'default';
+  const selected=['small','default','large','xlarge'].includes(stored)?stored:'default';
+  const status=$('#syncText')?.textContent||'Dropbox connected';
+  const statusState=$('#syncDot')?.dataset.state||'ok';
+  article.innerHTML = `
+    <div class="eyebrow">Photopedia</div><h1>Settings</h1>
+    <p class="deck">Reading preferences and private-library management.</p>
+    <section class="settings-group" aria-labelledby="settingsReading">
+      <div class="settings-group-heading"><h2 id="settingsReading">Reading</h2><p>Make article text and supporting captions comfortable on any screen.</p></div>
+      <div class="settings-row">
+        <div class="settings-row-copy"><label for="settingsFontSizeSelect"><strong>Text size</strong></label><p>Applies to articles, captions, cards and teaching diagrams.</p></div>
+        <select id="settingsFontSizeSelect" aria-label="Reading text size">
+          <option value="small" ${selected==='small'?'selected':''}>Small</option>
+          <option value="default" ${selected==='default'?'selected':''}>Default</option>
+          <option value="large" ${selected==='large'?'selected':''}>Large</option>
+          <option value="xlarge" ${selected==='xlarge'?'selected':''}>Extra Large</option>
+        </select>
+      </div>
+      <p class="settings-preview" id="settingsReadingPreview">Photography is about deciding what matters within the frame.</p>
+    </section>
+    <section class="settings-group" aria-labelledby="settingsLibrary">
+      <div class="settings-group-heading"><h2 id="settingsLibrary">Library</h2><p>Manage additional Photopedia articles without disturbing your private notes or photographs.</p></div>
+      <div class="settings-row">
+        <div class="settings-row-copy"><strong>Import Collection</strong><p>Add a validated content pack to the private Dropbox library. Existing articles are preserved and a backup is created first.</p></div>
+        <button class="btn secondary" id="importCollectionBtn" type="button">Import Collection…</button>
+      </div>
+    </section>
+    <section class="settings-group" aria-labelledby="settingsDropbox">
+      <div class="settings-group-heading"><h2 id="settingsDropbox">Dropbox</h2><p>Your articles and personal data are stored in a private Dropbox app folder.</p></div>
+      <div class="settings-row">
+        <div class="settings-row-copy"><strong>Connection</strong><p class="settings-connection-status"><span class="sync-dot" id="settingsSyncDot" data-state="${esc(statusState)}"></span><span id="settingsSyncText">${esc(status)}</span></p></div>
+        <button class="btn secondary${/expired|reconnect/i.test(status)?'':' hidden'}" id="dropboxReconnect" type="button">Reconnect Dropbox</button>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-copy"><strong>Sign out</strong><p>Disconnect this device from Photopedia. Your Dropbox files remain untouched.</p></div>
+        <button class="btn secondary" id="dropboxSignOut" type="button">Sign out</button>
+      </div>
+    </section>
+    <section class="settings-group" aria-labelledby="settingsAbout">
+      <div class="settings-group-heading"><h2 id="settingsAbout">About</h2></div>
+      <div class="settings-row"><div class="settings-row-copy"><strong>Photopedia V1.0.14</strong><p>Your personal photography reference. GitHub Pages hosts the application; Dropbox holds the private library.</p></div></div>
+    </section>`;
+  context.innerHTML = `<div class="context-section"><div class="eyebrow">Settings</div><h3>Private by design</h3><div class="context-note">The app's content is stored in Dropbox, and display settings are retained on this device and synced to your personal preferences file.</div></div>`;
+  wireDynamic();
+  updateStarButton();
+}
+
 function showNotebook(){
   state.section='notebook';state.current='notebook';setHash('notebook');updateActiveNav();setCrumbs([{label:'Notebook'}]);
   const notes=getNotes(); const ids=Object.keys(notes).filter(id=>entries[id]&&notes[id].trim());
@@ -235,7 +288,7 @@ function showEntry(id){
   updateStarButton();
   window.scrollTo({top:0,behavior:'instant'});
 }
-function sectionLabel(s){return ({learn:'Learn',gear:'Gear',field:'Field Guide',lab:'Lab',challenges:'Challenges',landscape:'Landscape',architecture:'Architecture',notebook:'Notebook',starred:'Starred'})[s]||s}
+function sectionLabel(s){return ({learn:'Learn',gear:'Gear',field:'Field Guide',lab:'Lab',challenges:'Challenges',landscape:'Landscape',architecture:'Architecture',notebook:'Notebook',starred:'Starred',settings:'Settings'})[s]||s}
 
 function openNote(id){
   noteDialog.dataset.entry=id;noteTitle.textContent=entries[id].title;noteText.value=noteFor(id);noteDialog.showModal();setTimeout(()=>noteText.focus(),20)
@@ -283,20 +336,20 @@ $('#closeSidebar').onclick=closeMobileSidebar;
 document.addEventListener('click',e=>{if(innerWidth<781&&sidebar.classList.contains('open')&&!sidebar.contains(e.target)&&e.target.id!=='openSidebar')sidebar.classList.remove('open')});
 
 
-const fontSizeSelect = $('#fontSizeSelect');
-const mobileFontSizeSelect = $('#mobileFontSizeSelect');
 const fontSizes = {small:'15px',default:'16.5px',large:'18px',xlarge:'20px'};
 function applyFontSize(size, save=true){
   const safe=fontSizes[size]?size:'default';
   document.documentElement.style.setProperty('--article-font-size',fontSizes[safe]);
-  if(fontSizeSelect) fontSizeSelect.value=safe;
-  if(mobileFontSizeSelect) mobileFontSizeSelect.value=safe;
+  const selector=$('#settingsFontSizeSelect');
+  if(selector) selector.value=safe;
   localStorage.setItem('photopedia-font-size',safe);
   if(save) window.PhotopediaDropbox?.savePersonal('preferences.json',{fontSize:safe});
 }
 applyFontSize(localStorage.getItem('photopedia-font-size')||'default', false);
-fontSizeSelect?.addEventListener('change',e=>applyFontSize(e.target.value));
-mobileFontSizeSelect?.addEventListener('change',e=>applyFontSize(e.target.value));
+document.addEventListener('change',e=>{
+  if(e.target?.id==='settingsFontSizeSelect') applyFontSize(e.target.value);
+});
+$('#openSettings')?.addEventListener('click',()=>{showSettings();closeMobileSidebar()});
 
 if(backBtn) backBtn.addEventListener('click',goBack);
 window.addEventListener('popstate',renderFromLocation);
