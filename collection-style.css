@@ -1,0 +1,36 @@
+/* Photopedia V1.0.13: private collection imports and subject guides. */
+#collectionFileInput { display:block; width:100%; max-width:100%; margin:9px 0 18px; color:var(--ink); font-size:16px; }
+.collection-dialog { width:min(600px,calc(100vw - 28px)); }
+.collection-dialog .note-form > p { font-size:16px; line-height:1.55; color:var(--muted); }
+.collection-file-label { font-weight:650; display:block; font-size:16px; }
+.collection-preview { border:1px solid var(--line); background:var(--bg); border-radius:12px; padding:14px 16px; min-height:60px; font-size:15px; line-height:1.55; overflow-wrap:break-word; }
+.collection-preview[data-state="error"] { color:#963e38; border-color:#b97874; }
+.collection-preview[data-state="ok"] { color:var(--ink); }
+.collection-dialog .btn:disabled { opacity:.5; cursor:not-allowed; }
+.subject-index-intro { padding:20px 21px; background:var(--paper); border:1px solid var(--line); border-radius:16px; line-height:1.6; }
+.subject-index-intro strong { font-size:20px; display:block; font-family:Georgia,serif; font-weight:500; margin-bottom:7px; }
+.subject-index-intro span { font-size:var(--article-font-size); color:var(--muted); }
+.subject-index-group { margin:36px 0 48px; }
+.subject-index-group > h2 { margin:0 0 16px; }
+.subject-entry-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:13px; }
+.subject-entry-card { background:var(--paper); border:1px solid var(--line); border-radius:15px; padding:18px; cursor:pointer; display:flex; flex-direction:column; gap:8px; }
+.subject-entry-card:hover { box-shadow:var(--shadow); }
+.subject-entry-card strong { font-family:Georgia,serif; font-size:21px; line-height:1.26; font-weight:500; }
+.subject-entry-card p { margin:0; font-size:calc(var(--article-font-size)*.87); line-height:1.5; color:var(--muted); flex:1; }
+.subject-entry-card small { font-size:13px; color:var(--warm); text-transform:uppercase; letter-spacing:.045em; }
+.study-figure { padding:0; background:var(--paper); overflow:hidden; border:1px solid var(--line); border-radius:15px; margin:25px 0; }
+.study-figure svg { width:100%; display:block; height:auto; }
+.study-figure .figure-caption { font-size:calc(var(--article-font-size)*.88); line-height:1.5; margin:0; padding:12px 17px 16px; border-top:1px solid var(--line); }
+.subject-index-group .topic-list { margin:0; }
+.subject-index-card p, .study-figure text { overflow-wrap:break-word; }
+@media (max-width:850px) {
+  .subject-entry-grid {grid-template-columns:1fr;}
+  .subject-entry-card {padding:18px;}
+  .subject-entry-card p,.subject-index-intro span {font-size:max(17px,calc(var(--article-font-size)*.9));line-height:1.58;}
+  .study-figure .figure-caption {font-size:max(16px,calc(var(--article-font-size)*.88));}
+}
+@media (max-width:480px) {
+  .collection-dialog .note-form {padding:18px;}
+  .collection-dialog .dialog-actions { flex-wrap:wrap; }
+  .collection-dialog .btn {min-height:44px;}
+}
