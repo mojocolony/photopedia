@@ -7,7 +7,7 @@
   <meta name="application-name" content="Photopedia" />
   <meta name="apple-mobile-web-app-title" content="Photopedia" />
   <title>Photopedia</title>
-  <link rel="manifest" href="manifest.webmanifest?v=1.0.12" />
+  <link rel="manifest" href="manifest.webmanifest?v=1.0.13" />
   <link rel="shortcut icon" href="favicon.ico" />
   <link rel="icon" type="image/png" sizes="48x48" href="icon-48.png" />
   <link rel="icon" type="image/png" sizes="96x96" href="icon-96.png" />
@@ -18,15 +18,16 @@
   <link rel="icon" type="image/png" sizes="1024x1024" href="icon-1024.png" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png" />
-  <link rel="stylesheet" href="styles.css?v=1.0.12" />
+  <link rel="stylesheet" href="styles.css?v=1.0.13" />
   <link rel="stylesheet" href="mobile-readability.css?v=1.0.12" />
+  <link rel="stylesheet" href="collection-style.css?v=1.0.13" />
 </head>
 <body>
   <section class="auth-gate" id="authGate">
     <div class="auth-card">
       <div class="brand auth-brand">Photopedia</div>
       <p class="auth-deck">Your personal photography reference.</p>
-      <div class="auth-version">V1.0.12 · Private Dropbox library</div>
+      <div class="auth-version">V1.0.13 · Private Dropbox library</div>
       <div id="authMessage" class="auth-message">Connect Dropbox to load your private Photopedia library.</div>
       <button class="btn auth-btn" id="dropboxSignIn">Sign in with Dropbox</button>
       <div id="authSetup" class="auth-setup hidden"></div>
@@ -65,9 +66,10 @@
       </div>
 
       <div class="sidebar-footer">
-        <div class="version-line">V1.0.12 · Private library</div>
+        <div class="version-line">V1.0.13 · Private library</div>
         <div class="dropbox-status"><span class="sync-dot" id="syncDot"></span><span id="syncText">Dropbox connected</span></div>
         <button class="sidebar-link-btn hidden" id="dropboxReconnect">Reconnect Dropbox</button>
+        <button class="sidebar-link-btn" id="importCollectionBtn" type="button">Import Collection…</button>
         <button class="sidebar-link-btn" id="dropboxSignOut">Sign out</button>
       </div>
     </aside>
@@ -104,6 +106,23 @@
     <div id="imageDialogCaption" class="image-dialog-caption"></div>
   </dialog>
 
+  <dialog id="collectionDialog" class="collection-dialog">
+    <div class="note-form">
+      <div class="dialog-head">
+        <div><div class="eyebrow">Private library</div><h2>Import a Photopedia collection</h2></div>
+        <button class="icon-btn" id="collectionDialogClose" type="button" aria-label="Close">×</button>
+      </div>
+      <p>Choose a Photopedia content pack. Only new entries are added. Existing entries and personal data remain unchanged.</p>
+      <label class="collection-file-label" for="collectionFileInput">Select a collection JSON file</label>
+      <input id="collectionFileInput" type="file" accept=".json,application/json" />
+      <div id="collectionPreview" class="collection-preview" role="status" aria-live="polite">No collection selected.</div>
+      <div class="dialog-actions">
+        <button class="btn secondary" id="collectionCancel" type="button">Cancel</button>
+        <button class="btn" id="collectionConfirm" type="button" disabled>Import into Dropbox</button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog id="noteDialog">
     <form method="dialog" class="note-form" id="noteForm">
       <div class="dialog-head">
@@ -123,7 +142,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/dropbox@10.34.0/dist/Dropbox-sdk.min.js"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=1.0.12"></script>
-  <script src="dropbox.js"></script>
+  <script src="app.js?v=1.0.13"></script>
+  <script src="dropbox.js?v=1.0.13"></script>
 </body>
 </html>
