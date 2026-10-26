@@ -7,7 +7,7 @@
   <meta name="application-name" content="Photopedia" />
   <meta name="apple-mobile-web-app-title" content="Photopedia" />
   <title>Photopedia</title>
-  <link rel="manifest" href="manifest.webmanifest?v=1.0.13" />
+  <link rel="manifest" href="manifest.webmanifest?v=1.0.14" />
   <link rel="shortcut icon" href="favicon.ico" />
   <link rel="icon" type="image/png" sizes="48x48" href="icon-48.png" />
   <link rel="icon" type="image/png" sizes="96x96" href="icon-96.png" />
@@ -21,13 +21,14 @@
   <link rel="stylesheet" href="styles.css?v=1.0.13" />
   <link rel="stylesheet" href="mobile-readability.css?v=1.0.12" />
   <link rel="stylesheet" href="collection-style.css?v=1.0.13" />
+  <link rel="stylesheet" href="settings.css?v=1.0.14" />
 </head>
 <body>
   <section class="auth-gate" id="authGate">
     <div class="auth-card">
       <div class="brand auth-brand">Photopedia</div>
       <p class="auth-deck">Your personal photography reference.</p>
-      <div class="auth-version">V1.0.13 · Private Dropbox library</div>
+      <div class="auth-version">V1.0.14 · Private Dropbox library</div>
       <div id="authMessage" class="auth-message">Connect Dropbox to load your private Photopedia library.</div>
       <button class="btn auth-btn" id="dropboxSignIn">Sign in with Dropbox</button>
       <div id="authSetup" class="auth-setup hidden"></div>
@@ -52,25 +53,8 @@
 
       <nav id="nav" class="nav"></nav>
 
-      <div class="sidebar-mobile-tools">
-        <div class="sidebar-tool-label">Reading size</div>
-        <label class="sidebar-font-control">
-          <span class="font-label">Aa</span>
-          <select id="mobileFontSizeSelect" aria-label="Article font size">
-            <option value="small">Small</option>
-            <option value="default">Default</option>
-            <option value="large">Large</option>
-            <option value="xlarge">Extra Large</option>
-          </select>
-        </label>
-      </div>
-
       <div class="sidebar-footer">
-        <div class="version-line">V1.0.13 · Private library</div>
         <div class="dropbox-status"><span class="sync-dot" id="syncDot"></span><span id="syncText">Dropbox connected</span></div>
-        <button class="sidebar-link-btn hidden" id="dropboxReconnect">Reconnect Dropbox</button>
-        <button class="sidebar-link-btn" id="importCollectionBtn" type="button">Import Collection…</button>
-        <button class="sidebar-link-btn" id="dropboxSignOut">Sign out</button>
       </div>
     </aside>
 
@@ -81,15 +65,6 @@
         <button class="back-btn" id="backBtn" aria-label="Go back">← <span>Back</span></button>
         <div class="crumbs" id="crumbs"></div>
         <button class="star-btn hidden" id="starBtn" aria-label="Star this entry" title="Star this entry"><span aria-hidden="true">☆</span></button>
-        <div class="font-size-control" aria-label="Article font size">
-          <span class="font-label" title="Text size">Aa</span>
-          <select id="fontSizeSelect" aria-label="Article font size">
-            <option value="small">Small</option>
-            <option value="default">Default</option>
-            <option value="large">Large</option>
-            <option value="xlarge">Extra Large</option>
-          </select>
-        </div>
         <button class="icon-btn" id="focusSearch" aria-label="Search">⌕</button>
       </header>
 
@@ -142,7 +117,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/dropbox@10.34.0/dist/Dropbox-sdk.min.js"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=1.0.13"></script>
-  <script src="dropbox.js?v=1.0.13"></script>
+  <script src="app.js?v=1.0.14"></script>
+  <script src="dropbox.js?v=1.0.14"></script>
 </body>
 </html>
