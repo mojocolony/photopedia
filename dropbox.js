@@ -122,6 +122,165 @@
     if(!res.ok) { const text=await res.text(); const err=new Error(`Dropbox upload failed (${res.status})`); err.detail=text; throw err; }
     return res.json();
   }
+
+  // Collection packs are additive only. Read the CURRENT Dropbox library rather
+  // than relying on a possibly stale cached copy. Preserve personal files.
+  async function collectionMetadata(path) {
+    const token=await refreshIfNeeded();
+    const res=await fetch('https://api.dropboxapi.com/2/files/get_metadata',{
+      method:'POST',
+      headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+      body:JSON.stringify({path})
+    });
+    if(!res.ok) throw new Error('Cannot verify Dropbox library revision ('+res.status+').');
+    const data=await res.json();
+    if(!data.rev) throw new Error('Dropbox library revision unavailable; no changes made.');
+    return data;
+  }
+  async function readFreshCollectionLibrary() {
+    const path='/content/content.json';
+    const before=await collectionMetadata(path);
+    const text=await dbxText(path);
+    const after=await collectionMetadata(path);
+    if(before.rev!==after.rev) throw new Error('Library changed during read. No changes made; retry.');
+    const content=safeJSON(text,null);
+    if(!content || !content.entries || Array.isArray(content.entries) || typeof content.entries!=='object')
+      throw new Error('Current Dropbox content.json is not a valid Photopedia library.');
+    return {content,rev:after.rev};
+  }
+  function validateCollectionPack(pack) {
+    if(!pack || pack.format!=='photopedia-content-pack-v1')
+      throw new Error('This is not a supported Photopedia collection pack.');
+    if(!pack.entries || Array.isArray(pack.entries) || typeof pack.entries!=='object')
+      throw new Error('Missing entry collection.');
+    const ids=Object.keys(pack.entries);
+    if(ids.length<1 || ids.length>100) throw new Error('Unexpected number of collection entries.');
+    const sections=['landscape','architecture'];
+    if(!pack.groups || typeof pack.groups!=='object') throw new Error('Missing subject group definitions.');
+    for(const sec of sections) {
+      const groups=pack.groups[sec];
+      if(!Array.isArray(groups) || !groups.every(g=>typeof g==='string'&&g.length<=80))
+        throw new Error('Invalid '+sec+' categories.');
+    }
+    for(const id of ids) {
+      if(!/^(?:land|arch)-[a-z0-9-]{2,100}$|^(?:landscape|architectural)-photography$/.test(id))
+        throw new Error('Unexpected entry identifier: '+id);
+      const e=pack.entries[id];
+      if(!e || !sections.includes(e.section) || !['type','title','category','deck','brief','body'].every(k=>typeof e[k]==='string'))
+        throw new Error('Invalid article: '+id);
+      if(e.body.length>30000 || /<script\b|<iframe\b|javascript:|on\w+\s*=|<object\b/i.test(e.body))
+        throw new Error('Unsafe article markup: '+id);
+      if(!pack.groups[e.section].includes(e.category))
+        throw new Error('Unknown category for '+id);
+    }
+    return ids;
+  }
+  function mergeCollectionEntries(current,pack) {
+    const next={...current,entries:{...current.entries}};
+    let added=0,identical=0;
+    for(const [id,entry] of Object.entries(pack.entries)) {
+      if(Object.prototype.hasOwnProperty.call(next.entries,id)) {
+        if(JSON.stringify(next.entries[id])!==JSON.stringify(entry))
+          throw new Error('Existing entry differs: '+id+'. No entries were changed.');
+        identical++;
+      } else {
+        next.entries[id]=entry;
+        added++;
+      }
+    }
+    for(const [sec,key] of [['landscape','landscapeGroups'],['architecture','architectureGroups']]) {
+      const existing=Array.isArray(next[key])?next[key]:[];
+      next[key]=[...new Set([...existing,...pack.groups[sec]])];
+    }
+    return {merged:next,added,identical};
+  }
+  async function guardedCollectionUpload(path,contents,mode) {
+    const token=await refreshIfNeeded();
+    const res=await fetch('https://content.dropboxapi.com/2/files/upload',{
+      method:'POST',
+      headers:{
+        Authorization:'Bearer '+token,
+        'Dropbox-API-Arg':JSON.stringify({path,mode,autorename:false,mute:true}),
+        'Content-Type':'application/octet-stream'
+      },
+      body:new Blob([contents],{type:'application/json'})
+    });
+    if(!res.ok) {
+      if(res.status===409) throw new Error('Dropbox reports a conflicting change or path. Nothing was overwritten; refresh and retry.');
+      throw new Error('Dropbox could not save the updated collection ('+res.status+').');
+    }
+    return res.json();
+  }
+  function setupCollectionImporter() {
+    const dialog=document.getElementById('collectionDialog');
+    const button=document.getElementById('importCollectionBtn');
+    const input=document.getElementById('collectionFileInput');
+    const preview=document.getElementById('collectionPreview');
+    const confirm=document.getElementById('collectionConfirm');
+    const close=()=>dialog?.close();
+    if(!dialog||!button||!input||!preview||!confirm) return;
+    let pending=null,loading=false;
+    const report=(message,state='')=>{
+      preview.textContent=message;
+      preview.dataset.state=state;
+    };
+    const open=()=>{
+      pending=null;input.value='';confirm.disabled=true;
+      report('Select the content-pack JSON file.');
+      dialog.showModal();
+    };
+    button.addEventListener('click',open);
+    document.getElementById('collectionCancel')?.addEventListener('click',close);
+    document.getElementById('collectionDialogClose')?.addEventListener('click',close);
+    input.addEventListener('change',async()=>{
+      pending=null;confirm.disabled=true;
+      const file=input.files?.[0];
+      if(!file)return report('No file selected.');
+      if(file.size>2000000)return report('Collection pack exceeds the 2 MB safety limit.','error');
+      report('Checking pack against the latest private Dropbox library…');
+      try {
+        const candidate=JSON.parse(await file.text());
+        const ids=validateCollectionPack(candidate);
+        const {content}=await readFreshCollectionLibrary();
+        const result=mergeCollectionEntries(content,candidate);
+        pending=candidate;
+        const names=['landscape','architecture'].map(sec=>
+          ids.filter(id=>candidate.entries[id].section===sec).length+' '+sec).join(' · ');
+        if(result.added===0) {
+          report(candidate.name+': all '+result.identical+' entries already exist; nothing to import.','ok');
+        } else {
+          report(candidate.name+' — '+names+'. '+result.added+' new entries, '+result.identical+
+            ' already identical. Existing articles are preserved and a Dropbox backup will be created.','ok');
+          confirm.disabled=false;
+        }
+      }catch(err){report(err.message||'Could not inspect this collection.','error');}
+    });
+    confirm.addEventListener('click',async()=>{
+      if(!pending||loading)return;
+      loading=true;confirm.disabled=true;input.disabled=true;
+      report('Checking latest Dropbox revision and creating a backup…');
+      try {
+        validateCollectionPack(pending);
+        const {content,rev}=await readFreshCollectionLibrary();
+        const result=mergeCollectionEntries(content,pending);
+        if(result.added===0) {
+          report('All entries are already installed.','ok');
+          return;
+        }
+        const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+        const backup='/content/content-pre-collection-'+stamp+'.json';
+        await guardedCollectionUpload(backup,JSON.stringify(content,null,2),'add');
+        report('Backup saved to '+backup+'. Installing '+result.added+' entries…');
+        await guardedCollectionUpload('/content/content.json',JSON.stringify(result.merged,null,2),
+          {'.tag':'update',update:rev});
+        writeLibraryCache(result.merged);
+        report('Collection imported. Refreshing Photopedia…','ok');
+        location.reload();
+      }catch(err){report(err.message||'Collection import failed.','error');}
+      finally{loading=false;input.disabled=false;}
+    });
+  }
+
   async function readJSON(path, fallback) { try{return safeJSON(await dbxText(path),fallback);}catch(e){if(e.status===409)return fallback;throw e;} }
   async function saveJSON(path, value) { return dbxUpload(path, JSON.stringify(value,null,2)+'\n'); }
 
@@ -214,6 +373,7 @@
     signInBtn?.addEventListener('click',()=>beginAuth().catch(e=>setMessage(e.message,'error')));
     reconnectBtn?.addEventListener('click',()=>beginAuth().catch(e=>setSync(e.message,'error')));
     document.getElementById('dropboxSignOut')?.addEventListener('click',signOut);
+    setupCollectionImporter();
     if(!APP_KEY){showMissingKey();return;}
     try{await handleCallback();}catch(e){console.error(e);clearAuth();setMessage(e.message,'error');return;}
     currentAuth=savedAuth();
