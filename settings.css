@@ -1,18 +1,8 @@
-/* Photopedia V1.0.16 — Settings and compact mobile header. */
-.settings-header-btn {
-  display:inline-grid; place-items:center; flex:0 0 auto;
-  width:44px; height:44px; padding:10px; border-radius:11px;
-  color:var(--accent);
-}
-.settings-header-btn:hover,.settings-header-btn.active {
-  background:var(--accent-soft);
-}
-.settings-header-btn:focus-visible,
+/* Photopedia V1.0.17 — Settings in navigation, compact mobile header. */
 .settings-row .btn:focus-visible,
 .settings-row select:focus-visible {
   outline:3px solid var(--accent); outline-offset:3px;
 }
-.settings-icon { width:23px; height:23px; display:block; }
 .settings-group {
   background:var(--paper);
   border:1px solid var(--line);
@@ -106,19 +96,10 @@
     text-align:center;
   }
   .topbar .star-btn {
-    grid-column:4;
-    grid-row:1;
-    justify-self:center;
-  }
-  .topbar .settings-header-btn {
+    /* Five symmetrical tracks preserve the centred title without Settings. */
     grid-column:5;
     grid-row:1;
     justify-self:center;
-    align-self:center;
-    width:44px;
-    height:44px;
-    min-width:44px;
-    min-height:44px;
   }
   /* Breadcrumbs duplicated the brand and forced a second row.
      Search remains available in the hamburger drawer. */
@@ -140,7 +121,4 @@
 @media(max-width:480px) {
   .settings-row, .settings-group-heading { padding-left:16px; padding-right:16px; }
   .article .settings-preview { padding-left:16px; padding-right:16px; }
-}
-@media(prefers-reduced-motion:reduce) {
-  .settings-header-btn { transition:none; }
 }
