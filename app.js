@@ -64,7 +64,7 @@ function buildNav(){
   nav.querySelectorAll('[data-section]').forEach(b=>b.onclick=()=>{showSection(b.dataset.section);closeMobileSidebar();});
   updateActiveNav();
 }
-function updateActiveNav(){nav.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.section===state.section));$('#openSettings')?.classList.toggle('active',state.section==='settings')}
+function updateActiveNav(){nav.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active', b.dataset.section===state.section))}
 function setHash(id){
   if(renderingHistory) return;
   const hash='#'+id;
@@ -122,7 +122,7 @@ function showHome(){
     ${Object.values(entries).some(e=>e.section==='landscape')?'<div class="home-card" data-go="landscape"><div class="eyebrow">Landscape</div><h3>Study the land</h3><p>Composition, light, fieldwork and photographers across generations.</p></div>':''}
     ${Object.values(entries).some(e=>e.section==='architecture')?'<div class="home-card" data-go="architecture"><div class="eyebrow">Architecture</div><h3>Read the built world</h3><p>Geometry, space, people, buildings and photographic histories.</p></div>':''}
   </div><h2>Start a rabbit hole</h2><div class="topic-list">${['exposure','aperture','shutter-speed','iso','depth-of-field','computational-photography'].map(topicCard).join('')}</div>`;
-  context.innerHTML=`<div class="context-section"><div class="eyebrow">V1.0.16</div><h3>Private, connected reference</h3><div class="context-note">Your Photopedia library loads privately from Dropbox after sign-in. GitHub Pages hosts only the application shell; notes, stars and reading preferences sync through Dropbox.</div></div>`;
+  context.innerHTML=`<div class="context-section"><div class="eyebrow">V1.0.17</div><h3>Private, connected reference</h3><div class="context-note">Your Photopedia library loads privately from Dropbox after sign-in. GitHub Pages hosts only the application shell; notes, stars and reading preferences sync through Dropbox.</div></div>`;
   wireDynamic();
 }
 
@@ -259,7 +259,7 @@ function showSettings(){
     </section>
     <section class="settings-group" aria-labelledby="settingsAbout">
       <div class="settings-group-heading"><h2 id="settingsAbout">About</h2></div>
-      <div class="settings-row"><div class="settings-row-copy"><strong>Photopedia V1.0.16</strong><p>Your personal photography reference. GitHub Pages hosts the application; Dropbox holds the private library.</p></div></div>
+      <div class="settings-row"><div class="settings-row-copy"><strong>Photopedia V1.0.17</strong><p>Your personal photography reference. GitHub Pages hosts the application; Dropbox holds the private library.</p></div></div>
     </section>`;
   context.innerHTML = `<div class="context-section"><div class="eyebrow">Settings</div><h3>Private by design</h3><div class="context-note">The app's content is stored in Dropbox, and display settings are retained on this device and synced to your personal preferences file.</div></div>`;
   wireDynamic();
@@ -352,7 +352,7 @@ applyFontSize(localStorage.getItem('photopedia-font-size')||'default', false);
 document.addEventListener('change',e=>{
   if(e.target?.id==='settingsFontSizeSelect') applyFontSize(e.target.value);
 });
-$('#openSettings')?.addEventListener('click',()=>{showSettings();closeMobileSidebar()});
+
 
 if(backBtn) backBtn.addEventListener('click',goBack);
 window.addEventListener('popstate',renderFromLocation);
