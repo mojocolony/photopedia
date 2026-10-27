@@ -1,4 +1,4 @@
-/* Photopedia V1.0.14 — One Settings surface across Mac, iPad and iPhone. */
+/* Photopedia V1.0.16 — Settings and compact mobile header. */
 .settings-header-btn {
   display:inline-grid; place-items:center; flex:0 0 auto;
   width:44px; height:44px; padding:10px; border-radius:11px;
@@ -72,13 +72,58 @@
   .settings-row select, .settings-row .btn { font-size:17px; }
 }
 @media(max-width:780px) {
-  .settings-header-btn {
-    grid-column:3; grid-row:2; justify-self:end; align-self:center;
-    width:44px; height:44px; min-width:44px; min-height:44px;
+  /* One compact toolbar on iPhone and narrow iPads. Reserve symmetrical
+     control slots so the brand stays centred when Back/Star are hidden. */
+  .topbar {
+    height:60px;
+    min-height:60px;
+    display:grid;
+    grid-template-columns:44px 44px minmax(0,1fr) 44px 44px;
+    grid-template-rows:52px;
+    gap:0 2px;
+    padding:4px 10px;
+    align-items:center;
   }
-  .topbar .crumbs {
-    grid-column:2; grid-row:2; padding-right:2px; text-align:left;
+  .topbar .mobile-menu-btn {
+    grid-column:1;
+    grid-row:1;
+    justify-self:center;
   }
+  .topbar .back-btn {
+    grid-column:2;
+    grid-row:1;
+    justify-self:center;
+  }
+  .topbar .mobile-title {
+    grid-column:3;
+    grid-row:1;
+    min-width:0;
+    font-size:clamp(17px,5vw,23px);
+    line-height:1.2;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    text-align:center;
+  }
+  .topbar .star-btn {
+    grid-column:4;
+    grid-row:1;
+    justify-self:center;
+  }
+  .topbar .settings-header-btn {
+    grid-column:5;
+    grid-row:1;
+    justify-self:center;
+    align-self:center;
+    width:44px;
+    height:44px;
+    min-width:44px;
+    min-height:44px;
+  }
+  /* Breadcrumbs duplicated the brand and forced a second row.
+     Search remains available in the hamburger drawer. */
+  .topbar .crumbs,
+  .topbar #focusSearch { display:none; }
   .settings-group { margin:22px 0; border-radius:15px; }
   .settings-group-heading { padding:20px 18px 15px; }
   .article .settings-group-heading h2 { font-size:26px; }
